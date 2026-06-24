@@ -24,11 +24,11 @@ from rest_framework.response import Response
 from neves_be.api.serializers import RadicalSerializer
 from neves_be.api.serializers import RadicalSessionSerializer
 from neves_be.api.serializers import RadicalSessionTestSerializer
-from radicals.models import Radical
-from radicals.models import RadicalSession
-from radicals.models import RadicalSessionRadical
-from radicals.models import RadicalSessionTest
-from radicals.models import RadicalSessionTestQuestion
+from neves_be.radicals.models import Radical
+from neves_be.radicals.models import RadicalSession
+from neves_be.radicals.models import RadicalSessionRadical
+from neves_be.radicals.models import RadicalSessionTest
+from neves_be.radicals.models import RadicalSessionTestQuestion
 
 User = get_user_model()
 ANSWER_CHOICES = ["a", "b", "c", "d", "e"]

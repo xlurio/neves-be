@@ -1,16 +1,16 @@
 from django.contrib import admin
 
-from radicals.models import Logogram
-from radicals.models import LogogramWordMap
-from radicals.models import Radical
-from radicals.models import RadicalLogogramMap
-from radicals.models import RadicalSession
-from radicals.models import RadicalSessionRadical
-from radicals.models import RadicalSessionTest
-from radicals.models import RadicalSessionTestQuestion
-from radicals.models import Sentence
-from radicals.models import Word
-from radicals.models import WordSentenceMap
+from neves_be.radicals.models import Logogram
+from neves_be.radicals.models import LogogramWordMap
+from neves_be.radicals.models import Radical
+from neves_be.radicals.models import RadicalLogogramMap
+from neves_be.radicals.models import RadicalSession
+from neves_be.radicals.models import RadicalSessionRadical
+from neves_be.radicals.models import RadicalSessionTest
+from neves_be.radicals.models import RadicalSessionTestQuestion
+from neves_be.radicals.models import Sentence
+from neves_be.radicals.models import Word
+from neves_be.radicals.models import WordSentenceMap
 
 
 @admin.register(Radical)

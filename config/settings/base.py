@@ -81,7 +81,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "neves_be.users",
-    "radicals",
+    "neves_be.radicals.apps.RadicalsConfig",
     "neves_be.api",
     # Your stuff: custom apps go here
 ]

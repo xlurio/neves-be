@@ -5,11 +5,11 @@ from http import HTTPStatus
 import pytest
 from django.test import Client
 
+from neves_be.radicals.models import Radical
+from neves_be.radicals.models import RadicalSession
+from neves_be.radicals.models import RadicalSessionRadical
+from neves_be.radicals.models import RadicalSessionTest
 from neves_be.users.tests.factories import UserFactory
-from radicals.models import Radical
-from radicals.models import RadicalSession
-from radicals.models import RadicalSessionRadical
-from radicals.models import RadicalSessionTest
 
 pytestmark = pytest.mark.django_db
 
