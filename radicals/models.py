@@ -41,7 +41,10 @@ class RadicalLogogramMap(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["logogram", "radical"], name="uniq_logogram_radical"),
+            models.UniqueConstraint(
+                fields=["logogram", "radical"],
+                name="uniq_logogram_radical",
+            ),
         ]
 
 
@@ -64,7 +67,10 @@ class LogogramWordMap(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["word", "logogram"], name="uniq_word_logogram"),
+            models.UniqueConstraint(
+                fields=["word", "logogram"],
+                name="uniq_word_logogram",
+            ),
         ]
 
 
@@ -85,13 +91,21 @@ class WordSentenceMap(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["sentence", "word"], name="uniq_sentence_word"),
+            models.UniqueConstraint(
+                fields=["sentence", "word"],
+                name="uniq_sentence_word",
+            ),
         ]
 
 
 class RadicalSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     num_of_radicals = models.PositiveIntegerField(default=0)
     highest_score = models.PositiveIntegerField(default=0)
@@ -101,21 +115,35 @@ class RadicalSession(models.Model):
 
 
 class RadicalSessionRadical(models.Model):
-    session = models.ForeignKey(RadicalSession, on_delete=models.CASCADE, related_name="session_radicals")
+    session = models.ForeignKey(
+        RadicalSession,
+        on_delete=models.CASCADE,
+        related_name="session_radicals",
+    )
     radical = models.ForeignKey(Radical, on_delete=models.CASCADE)
     position = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["session", "position"]
         constraints = [
-            models.UniqueConstraint(fields=["session", "radical"], name="uniq_session_radical"),
-            models.UniqueConstraint(fields=["session", "position"], name="uniq_session_position"),
+            models.UniqueConstraint(
+                fields=["session", "radical"],
+                name="uniq_session_radical",
+            ),
+            models.UniqueConstraint(
+                fields=["session", "position"],
+                name="uniq_session_position",
+            ),
         ]
 
 
 class RadicalSessionTest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session = models.ForeignKey(RadicalSession, on_delete=models.CASCADE, related_name="tests")
+    session = models.ForeignKey(
+        RadicalSession,
+        on_delete=models.CASCADE,
+        related_name="tests",
+    )
     finished_at = models.DateTimeField(null=True, blank=True)
     score = models.PositiveIntegerField(default=0)
 
@@ -139,17 +167,29 @@ class RadicalSessionTestQuestion(models.Model):
         D = "d", "D"
         E = "e", "E"
 
-    test = models.ForeignKey(RadicalSessionTest, on_delete=models.CASCADE, related_name="questions")
+    test = models.ForeignKey(
+        RadicalSessionTest,
+        on_delete=models.CASCADE,
+        related_name="questions",
+    )
     number = models.PositiveIntegerField()
     type = models.CharField(max_length=32, choices=Type.choices)
     question = models.TextField()
     alternatives = models.JSONField(default=list)
     audio = models.CharField(max_length=512, blank=True, default="")
-    curr_answer = models.CharField(max_length=1, choices=Answer.choices, null=True, blank=True)
+    curr_answer = models.CharField(
+        max_length=1,
+        choices=Answer.choices,
+        null=True,
+        blank=True,
+    )
     expected_answer = models.CharField(max_length=1, choices=Answer.choices)
 
     class Meta:
         ordering = ["test", "number"]
         constraints = [
-            models.UniqueConstraint(fields=["test", "number"], name="uniq_test_question_number"),
+            models.UniqueConstraint(
+                fields=["test", "number"],
+                name="uniq_test_question_number",
+            ),
         ]

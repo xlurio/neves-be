@@ -32,7 +32,7 @@ def seed_radicals(count: int = 6) -> list[Radical]:
     return radicals
 
 
-def seed_session(user, radicals: list[Radical]) -> RadicalSession:  # noqa: ANN001
+def seed_session(user, radicals: list[Radical]) -> RadicalSession:
     session = RadicalSession.objects.create(user=user, num_of_radicals=len(radicals))
     RadicalSessionRadical.objects.bulk_create(
         [
@@ -143,7 +143,10 @@ def test_finish_computes_score_and_result_contract(client: Client):
     test = RadicalSessionTest.objects.get(id=test_id)
     assert test.finished_at is not None
 
-    expected_correct = test.questions.filter(curr_answer="a", expected_answer="a").count()
+    expected_correct = test.questions.filter(
+        curr_answer="a",
+        expected_answer="a",
+    ).count()
     expected_score = int(round((expected_correct / count) * 100))
     assert test.score == expected_score
 
@@ -164,7 +167,9 @@ def test_user_cannot_access_other_users_test(client: Client):
     owner_client = Client()
     owner_client.force_login(owner)
     session = seed_session(owner, seed_radicals(6))
-    test_id = owner_client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
+    test_id = owner_client.post(f"/api/radicals/sessions/{session.id}/tests").json()[
+        "id"
+    ]
 
     client.force_login(other_user)
     response = client.get(f"/api/radicals/test/{test_id}/question/1")

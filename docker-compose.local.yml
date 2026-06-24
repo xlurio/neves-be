@@ -1,7 +1,7 @@
 volumes:
   neves_be_local_postgres_data: {}
   neves_be_local_postgres_data_backups: {}
-  
+
 
 services:
   django:

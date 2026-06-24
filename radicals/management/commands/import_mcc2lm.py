@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sqlite3
 from pathlib import Path
+from typing import overload
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -52,10 +53,18 @@ ACCENTED_PINYIN_REPLACEMENTS = {
 PINYIN_TOKEN_RE = re.compile(r"[a-zA-ZüÜǖǘǚǜāáǎàēéěèīíǐìōóǒòūúǔùv:]+")
 
 
-def _row_value(row: sqlite3.Row, key: str, default: str = "") -> str:
+@overload
+def _row_value(row: sqlite3.Row, key: str, default: str = "") -> str: ...
+
+
+@overload
+def _row_value(row: sqlite3.Row, key: str, default: int) -> int: ...
+
+
+def _row_value(row: sqlite3.Row, key: str, default: object = "") -> object:
     try:
         value = row[key]
-    except (IndexError, KeyError):
+    except IndexError, KeyError:
         return default
 
     return value if value is not None else default
@@ -87,7 +96,9 @@ class Command(BaseCommand):
 
         audio_dir = Path(settings.BASE_DIR) / "audio-cmn" / "18k-abr" / "syllabs"
         if not audio_dir.exists():
-            self.stdout.write(self.style.WARNING(f"Audio directory not found: {audio_dir}"))
+            self.stdout.write(
+                self.style.WARNING(f"Audio directory not found: {audio_dir}"),
+            )
 
         with sqlite3.connect(sqlite_path) as source_db:
             source_db.row_factory = sqlite3.Row
@@ -106,7 +117,9 @@ class Command(BaseCommand):
                 Logogram.objects.all().delete()
                 Radical.objects.all().delete()
 
-                radicals_rows = cursor.execute("SELECT * FROM MCC2LM_RADICAL").fetchall()
+                radicals_rows = cursor.execute(
+                    "SELECT * FROM MCC2LM_RADICAL",
+                ).fetchall()
                 radical_models: list[Radical] = []
                 missing_audio_count = 0
 
@@ -129,7 +142,9 @@ class Command(BaseCommand):
                             id=radical_id,
                             pinyin=pinyin,
                             meaning=str(_row_value(row, "MEANING")),
-                            main_representation=ord(radical_id[0]) if radical_id else None,
+                            main_representation=ord(radical_id[0])
+                            if radical_id
+                            else None,
                             other_vars=[],
                             pronounce=pronounce,
                         ),
@@ -137,7 +152,9 @@ class Command(BaseCommand):
 
                 Radical.objects.bulk_create(radical_models, batch_size=batch_size)
 
-                logogram_rows = cursor.execute("SELECT * FROM MCC2LM_LOGOGRAM").fetchall()
+                logogram_rows = cursor.execute(
+                    "SELECT * FROM MCC2LM_LOGOGRAM",
+                ).fetchall()
                 Logogram.objects.bulk_create(
                     [
                         Logogram(
@@ -151,7 +168,9 @@ class Command(BaseCommand):
                     batch_size=batch_size,
                 )
 
-                map_rows = cursor.execute("SELECT LOGOGRAM_ID, RADICAL_ID FROM MCC2LM_RADICAL_LOGOGRAM_MAP").fetchall()
+                map_rows = cursor.execute(
+                    "SELECT LOGOGRAM_ID, RADICAL_ID FROM MCC2LM_RADICAL_LOGOGRAM_MAP",
+                ).fetchall()
                 RadicalLogogramMap.objects.bulk_create(
                     [
                         RadicalLogogramMap(
@@ -178,7 +197,9 @@ class Command(BaseCommand):
                     batch_size=batch_size,
                 )
 
-                logogram_word_rows = cursor.execute("SELECT WORD_ID, LOGOGRAM_ID FROM MCC2LM_LOGOGRAM_WORD_MAP").fetchall()
+                logogram_word_rows = cursor.execute(
+                    "SELECT WORD_ID, LOGOGRAM_ID FROM MCC2LM_LOGOGRAM_WORD_MAP",
+                ).fetchall()
                 LogogramWordMap.objects.bulk_create(
                     [
                         LogogramWordMap(
@@ -191,7 +212,9 @@ class Command(BaseCommand):
                     ignore_conflicts=True,
                 )
 
-                sentence_rows = cursor.execute("SELECT * FROM MCC2LM_SENTENCE").fetchall()
+                sentence_rows = cursor.execute(
+                    "SELECT * FROM MCC2LM_SENTENCE",
+                ).fetchall()
                 Sentence.objects.bulk_create(
                     [
                         Sentence(
@@ -203,7 +226,9 @@ class Command(BaseCommand):
                     batch_size=batch_size,
                 )
 
-                word_sentence_rows = cursor.execute("SELECT SENTENCE_ID, WORD_ID FROM MCC2LM_WORD_SENTENCE_MAP").fetchall()
+                word_sentence_rows = cursor.execute(
+                    "SELECT SENTENCE_ID, WORD_ID FROM MCC2LM_WORD_SENTENCE_MAP",
+                ).fetchall()
                 WordSentenceMap.objects.bulk_create(
                     [
                         WordSentenceMap(
@@ -216,7 +241,9 @@ class Command(BaseCommand):
                     ignore_conflicts=True,
                 )
 
-                default_session = RadicalSession.objects.create(num_of_radicals=min(20, len(radical_models)))
+                default_session = RadicalSession.objects.create(
+                    num_of_radicals=min(20, len(radical_models)),
+                )
                 RadicalSessionRadical.objects.bulk_create(
                     [
                         RadicalSessionRadical(
@@ -224,7 +251,12 @@ class Command(BaseCommand):
                             radical=radical,
                             position=position,
                         )
-                        for position, radical in enumerate(Radical.objects.order_by("id")[: default_session.num_of_radicals], start=1)
+                        for position, radical in enumerate(
+                            Radical.objects.order_by("id")[
+                                : default_session.num_of_radicals
+                            ],
+                            start=1,
+                        )
                     ],
                     batch_size=batch_size,
                 )

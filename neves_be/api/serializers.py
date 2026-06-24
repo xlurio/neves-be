@@ -35,7 +35,14 @@ class RadicalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Radical
-        fields = ["id", "mainRepresentation", "otherVars", "pinyin", "meaning", "pronounce"]
+        fields = [
+            "id",
+            "mainRepresentation",
+            "otherVars",
+            "pinyin",
+            "meaning",
+            "pronounce",
+        ]
 
     def get_mainRepresentation(self, instance: Radical) -> int:
         if instance.main_representation is not None:
@@ -51,7 +58,9 @@ class RadicalSerializer(serializers.ModelSerializer):
         if not instance.pronounce:
             return ""
 
-        if instance.pronounce.startswith("http://") or instance.pronounce.startswith("https://"):
+        if instance.pronounce.startswith("http://") or instance.pronounce.startswith(
+            "https://",
+        ):
             return instance.pronounce
 
         request = self.context.get("request")

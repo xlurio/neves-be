@@ -4,8 +4,8 @@ import random
 from json import JSONDecodeError
 
 from django.contrib.auth import authenticate
-from django.contrib.auth import login
 from django.contrib.auth import get_user_model
+from django.contrib.auth import login
 from django.db import models
 from django.db import transaction
 from django.db.models import QuerySet
@@ -46,7 +46,14 @@ class DefaultPagination(PageNumberPagination):
     page_size = 10
 
 
-def error_response(code: str, title: str, details: str, *, http_status: int, payload: dict | None = None) -> Response:
+def error_response(
+    code: str,
+    title: str,
+    details: str,
+    *,
+    http_status: int,
+    payload: dict | None = None,
+) -> Response:
     response_payload: dict[str, object] = {
         "code": code,
         "title": title,
@@ -72,11 +79,15 @@ def _load_request_data(request: Request) -> dict:
         return request.data
     try:
         return dict(request.data)
-    except (TypeError, ValueError, JSONDecodeError):
+    except TypeError, ValueError, JSONDecodeError:
         return {}
 
 
-def _pick_option_radicals(correct: Radical, pool: list[Radical], rng: random.Random) -> list[Radical]:
+def _pick_option_radicals(
+    correct: Radical,
+    pool: list[Radical],
+    rng: random.Random,
+) -> list[Radical]:
     distractors = [radical for radical in pool if radical.id != correct.id]
     selected = rng.sample(distractors, k=4)
     options = [*selected, correct]
@@ -98,7 +109,11 @@ def _question_text(radical: Radical, question_type: str) -> str:
     return f'What logogram corresponds to the pinyin "{radical.pinyin}"?'
 
 
-def _build_alternatives(request: Request, question_type: str, options: list[Radical]) -> list[dict[str, str]]:
+def _build_alternatives(
+    request: Request,
+    question_type: str,
+    options: list[Radical],
+) -> list[dict[str, str]]:
     if question_type == RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO:
         return [
             {
@@ -120,14 +135,19 @@ def _build_alternatives(request: Request, question_type: str, options: list[Radi
 def _get_session_radicals(session: RadicalSession) -> list[Radical]:
     linked_radicals = [
         session_radical.radical
-        for session_radical in session.session_radicals.select_related("radical").order_by("position")
+        for session_radical in session.session_radicals.select_related(
+            "radical",
+        ).order_by("position")
     ]
     if linked_radicals:
         return linked_radicals
     return list(Radical.objects.order_by("id")[:20])
 
 
-def _serialize_question_payload(question: RadicalSessionTestQuestion, request: Request) -> dict:
+def _serialize_question_payload(
+    question: RadicalSessionTestQuestion,
+    request: Request,
+) -> dict:
     payload: dict[str, object] = {
         "type": question.type,
         "question": question.question,
@@ -139,15 +159,19 @@ def _serialize_question_payload(question: RadicalSessionTestQuestion, request: R
     return payload
 
 
-def _owned_session_or_404(request: Request, session_id) -> RadicalSession:  # noqa: ANN001
+def _owned_session_or_404(request: Request, session_id) -> RadicalSession:
     return get_object_or_404(RadicalSession, id=session_id, user=request.user)
 
 
-def _owned_test_or_404(request: Request, test_id) -> RadicalSessionTest:  # noqa: ANN001
-    return get_object_or_404(RadicalSessionTest.objects.select_related("session"), id=test_id, session__user=request.user)
+def _owned_test_or_404(request: Request, test_id) -> RadicalSessionTest:
+    return get_object_or_404(
+        RadicalSessionTest.objects.select_related("session"),
+        id=test_id,
+        session__user=request.user,
+    )
 
 
-def _ensure_user_default_session(user) -> None:  # noqa: ANN001
+def _ensure_user_default_session(user) -> None:
     if RadicalSession.objects.filter(user=user).exists():
         return
 
@@ -156,7 +180,10 @@ def _ensure_user_default_session(user) -> None:  # noqa: ANN001
         return
 
     with transaction.atomic():
-        session = RadicalSession.objects.create(user=user, num_of_radicals=len(radicals))
+        session = RadicalSession.objects.create(
+            user=user,
+            num_of_radicals=len(radicals),
+        )
         RadicalSessionRadical.objects.bulk_create(
             [
                 RadicalSessionRadical(
@@ -235,8 +262,15 @@ def user_create_view(request: Request) -> Response:
 @permission_classes([IsAuthenticated])
 def stats_me_view(request: Request) -> Response:
     total_radicals = Radical.objects.count()
-    radicals_learned = RadicalSessionRadical.objects.filter(session__user=request.user).values("radical_id").distinct().count()
-    progress = round((radicals_learned / total_radicals) * 100, 2) if total_radicals else 0.0
+    radicals_learned = (
+        RadicalSessionRadical.objects.filter(session__user=request.user)
+        .values("radical_id")
+        .distinct()
+        .count()
+    )
+    progress = (
+        round((radicals_learned / total_radicals) * 100, 2) if total_radicals else 0.0
+    )
 
     return Response(
         {
@@ -262,7 +296,7 @@ def radical_sessions_view(request: Request) -> Response:
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_session_detail_view(request: Request, session_id) -> Response:  # noqa: ANN001
+def radical_session_detail_view(request: Request, session_id) -> Response:
     session = _owned_session_or_404(request, session_id)
     serializer = RadicalSessionSerializer(session)
     return Response(serializer.data)
@@ -270,7 +304,7 @@ def radical_session_detail_view(request: Request, session_id) -> Response:  # no
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_session_radicals_view(request: Request, session_id) -> Response:  # noqa: ANN001
+def radical_session_radicals_view(request: Request, session_id) -> Response:
     session = _owned_session_or_404(request, session_id)
 
     radicals_qs: QuerySet[Radical] = Radical.objects.filter(
@@ -288,7 +322,7 @@ def radical_session_radicals_view(request: Request, session_id) -> Response:  # 
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def radical_session_tests_view(request: Request, session_id) -> Response:  # noqa: ANN001
+def radical_session_tests_view(request: Request, session_id) -> Response:
     session = _owned_session_or_404(request, session_id)
 
     if request.method == "GET":
@@ -326,7 +360,10 @@ def radical_session_tests_view(request: Request, session_id) -> Response:  # noq
                     type=question_type,
                     question=_question_text(radical, question_type),
                     alternatives=alternatives,
-                    audio=radical.pronounce if question_type == RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM else "",
+                    audio=radical.pronounce
+                    if question_type
+                    == RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM
+                    else "",
                     expected_answer=expected_answer,
                 ),
             )
@@ -339,7 +376,11 @@ def radical_session_tests_view(request: Request, session_id) -> Response:  # noq
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_test_question_view(request: Request, test_id, question_num: int) -> Response:  # noqa: ANN001
+def radical_test_question_view(
+    request: Request,
+    test_id,
+    question_num: int,
+) -> Response:
     test = _owned_test_or_404(request, test_id)
     total_questions = test.questions.count()
 
@@ -349,11 +390,17 @@ def radical_test_question_view(request: Request, test_id, question_num: int) -> 
     previous_url = None
     if question_num < total_questions:
         next_url = request.build_absolute_uri(
-            reverse("api-radical-test-question", kwargs={"test_id": str(test.id), "question_num": question_num + 1}),
+            reverse(
+                "api-radical-test-question",
+                kwargs={"test_id": str(test.id), "question_num": question_num + 1},
+            ),
         )
     if question_num > 1:
         previous_url = request.build_absolute_uri(
-            reverse("api-radical-test-question", kwargs={"test_id": str(test.id), "question_num": question_num - 1}),
+            reverse(
+                "api-radical-test-question",
+                kwargs={"test_id": str(test.id), "question_num": question_num - 1},
+            ),
         )
 
     return Response(
@@ -369,13 +416,13 @@ def radical_test_question_view(request: Request, test_id, question_num: int) -> 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def radical_test_answer_view(request: Request, test_id) -> Response:  # noqa: ANN001
+def radical_test_answer_view(request: Request, test_id) -> Response:
     test = _owned_test_or_404(request, test_id)
     data = _load_request_data(request)
 
     try:
-        question_num = int(data.get("questionNum"))
-    except (TypeError, ValueError):
+        question_num = int(str(data.get("questionNum", "")))
+    except TypeError, ValueError:
         return error_response(
             "INVALID_QUESTION",
             "Invalid question",
@@ -409,10 +456,12 @@ def radical_test_answer_view(request: Request, test_id) -> Response:  # noqa: AN
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def radical_test_finish_view(request: Request, test_id) -> Response:  # noqa: ANN001
+def radical_test_finish_view(request: Request, test_id) -> Response:
     test = _owned_test_or_404(request, test_id)
 
-    unanswered_question = test.questions.filter(curr_answer__isnull=True).order_by("number").first()
+    unanswered_question = (
+        test.questions.filter(curr_answer__isnull=True).order_by("number").first()
+    )
     if unanswered_question is not None:
         return error_response(
             "QUESTION_MISSED",
@@ -423,8 +472,12 @@ def radical_test_finish_view(request: Request, test_id) -> Response:  # noqa: AN
         )
 
     total_questions = test.questions.count()
-    correct_answers = test.questions.filter(curr_answer=models.F("expected_answer")).count()
-    score = int(round((correct_answers / total_questions) * 100)) if total_questions else 0
+    correct_answers = test.questions.filter(
+        curr_answer=models.F("expected_answer"),
+    ).count()
+    score = (
+        int(round((correct_answers / total_questions) * 100)) if total_questions else 0
+    )
 
     test.score = score
     test.finished_at = timezone.now()
@@ -440,7 +493,7 @@ def radical_test_finish_view(request: Request, test_id) -> Response:  # noqa: AN
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_test_result_view(request: Request, test_id) -> Response:  # noqa: ANN001
+def radical_test_result_view(request: Request, test_id) -> Response:
     test = _owned_test_or_404(request, test_id)
 
     questions_payload: list[dict[str, object]] = []

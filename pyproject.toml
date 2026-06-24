@@ -1,5 +1,5 @@
 [project]
-name = "neves_be"
+name = "neves-be"
 version = "0.1.0"
 description = "Back end for the neves project."
 readme = "README.md"
@@ -17,7 +17,6 @@ dependencies = [
   "collectfasta==3.3.3",
   "crispy-bootstrap5==2026.3",
   "django==6.0.6",
-  "djangorestframework==3.16.1",
   "django-allauth[mfa]==65.18.0",
   "django-anymail==15.0",
   "django-crispy-forms==2.6",
@@ -25,6 +24,7 @@ dependencies = [
   "django-model-utils==5.0.0",
   "django-redis==7.0.0",
   "django-storages[s3]==1.14.6",
+  "djangorestframework==3.16.1",
   "gunicorn==26.0.0",
   "hiredis==3.4.0",
   "pillow==12.2.0",
@@ -57,16 +57,16 @@ dev = [
 
 # ==== djLint ====
 [tool.djlint]
+profile = "django"
+include = "H017,H035"
+indent = 2
+max_line_length = 119
 blank_line_after_tag = "load,extends"
 close_void_tags = true
 format_css = true
 format_js = true
 # TODO: remove T002 when fixed https://github.com/djlint/djLint/issues/687
 ignore = "H006,H030,H031,T002"
-include = "H017,H035"
-indent = 2
-max_line_length = 119
-profile = "django"
 css.indent_size = 2
 js.indent_size = 2
 
@@ -77,7 +77,6 @@ extend-exclude = [
   "*/migrations/*.py",
   "staticfiles/*",
 ]
-
 lint.select = [
   "A",
   "ASYNC",
@@ -136,11 +135,35 @@ lint.ignore = [
   # Deactivated because it can make the code slow:
   # https://github.com/astral-sh/ruff/issues/7871
 ]
+lint.per-file-ignores."neves_be/api/serializers.py" = [ "N802", "N815" ]
+lint.per-file-ignores."neves_be/api/tests/test_radicals_api.py" = [ "PLR2004", "RUF046" ]
+lint.per-file-ignores."neves_be/api/views.py" = [ "PIE810", "PLR2004", "RUF046", "S311", "TC002" ]
+lint.per-file-ignores."radicals/management/commands/import_mcc2lm.py" = [ "EM102", "PLR0915", "TRY003" ]
+lint.per-file-ignores."radicals/models.py" = [ "DJ001", "DJ008" ]
 lint.isort.force-single-line = true
 
 # ==== pyproject-fmt ====
 [tool.pyproject-fmt]
 keep_full_version = true
+
+# ==== mypy ====
+[tool.mypy]
+ignore_missing_imports = true
+python_version = "3.14"
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+plugins = [
+  "mypy_django_plugin.main",
+]
+warn_unused_configs = true
+overrides = [
+  # Django migrations should not produce any errors:
+  { module = "*.migrations.*", ignore_errors = true },
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
 
 # ==== pytest ====
 [tool.pytest]
@@ -155,28 +178,8 @@ python_files = [
   "test_*.py",
 ]
 
+[tool.coverage]
 # ==== Coverage ====
-[tool.coverage.run]
-include = [ "neves_be/**" ]
-omit = [ "*/migrations/*", "*/tests/*" ]
-plugins = [ "django_coverage_plugin" ]
-
-# ==== mypy ====
-[tool.mypy]
-python_version = "3.14"
-check_untyped_defs = true
-ignore_missing_imports = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_unused_configs = true
-plugins = [
-  "mypy_django_plugin.main",
-]
-
-[[tool.mypy.overrides]]
-# Django migrations should not produce any errors:
-module = "*.migrations.*"
-ignore_errors = true
-
-[tool.django-stubs]
-django_settings_module = "config.settings.test"
+run.include = [ "neves_be/**" ]
+run.omit = [ "*/migrations/*", "*/tests/*" ]
+run.plugins = [ "django_coverage_plugin" ]

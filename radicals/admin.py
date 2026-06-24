@@ -15,14 +15,14 @@ from radicals.models import WordSentenceMap
 
 @admin.register(Radical)
 class RadicalAdmin(admin.ModelAdmin):
-	list_display = ["id", "pinyin", "meaning"]
-	search_fields = ["id", "pinyin", "meaning"]
+    list_display = ["id", "pinyin", "meaning"]
+    search_fields = ["id", "pinyin", "meaning"]
 
 
 @admin.register(Logogram)
 class LogogramAdmin(admin.ModelAdmin):
-	list_display = ["id", "occurrences", "pinyin"]
-	search_fields = ["id", "pinyin", "meaning"]
+    list_display = ["id", "occurrences", "pinyin"]
+    search_fields = ["id", "pinyin", "meaning"]
 
 
 admin.site.register(RadicalLogogramMap)
