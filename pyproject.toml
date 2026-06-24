@@ -130,17 +130,15 @@ lint.select = [
 lint.ignore = [
   "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
   "S101",   # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
-  "SIM102", # sometimes it's better to nest
   # of types for comparison.
   # Deactivated because it can make the code slow:
   # https://github.com/astral-sh/ruff/issues/7871
+  "S311",   # Random is useful unless used for cryptography,
+  "SIM102"
 ]
-lint.per-file-ignores."neves_be/api/serializers.py" = [ "N802", "N815" ]
-lint.per-file-ignores."neves_be/api/tests/test_radicals_api.py" = [ "PLR2004", "RUF046" ]
-lint.per-file-ignores."neves_be/api/views.py" = [ "PIE810", "PLR2004", "RUF046", "S311", "TC002" ]
-lint.per-file-ignores."radicals/management/commands/import_mcc2lm.py" = [ "EM102", "PLR0915", "TRY003" ]
-lint.per-file-ignores."radicals/models.py" = [ "DJ001", "DJ008" ]
+lint.exclude = [ "config", "manage.py", "tests", "**/migrations/*.py" ]
 lint.isort.force-single-line = true
+lint.pylint.max-statements = 30
 
 # ==== pyproject-fmt ====
 [tool.pyproject-fmt]

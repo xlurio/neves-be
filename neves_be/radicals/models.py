@@ -47,6 +47,9 @@ class RadicalLogogramMap(models.Model):
             ),
         ]
 
+    def __str__(self) -> str:
+        return f"{self.logogram_id}:{self.radical_id}"
+
 
 class Word(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -73,6 +76,9 @@ class LogogramWordMap(models.Model):
             ),
         ]
 
+    def __str__(self) -> str:
+        return f"{self.word_id}:{self.logogram_id}"
+
 
 class Sentence(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -97,6 +103,9 @@ class WordSentenceMap(models.Model):
             ),
         ]
 
+    def __str__(self) -> str:
+        return f"{self.sentence_id}:{self.word_id}"
+
 
 class RadicalSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -112,6 +121,9 @@ class RadicalSession(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return str(self.id)
 
 
 class RadicalSessionRadical(models.Model):
@@ -136,6 +148,9 @@ class RadicalSessionRadical(models.Model):
             ),
         ]
 
+    def __str__(self) -> str:
+        return f"{self.session_id}:{self.position}:{self.radical_id}"
+
 
 class RadicalSessionTest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -149,6 +164,9 @@ class RadicalSessionTest(models.Model):
 
     class Meta:
         ordering = ["-finished_at", "id"]
+
+    def __str__(self) -> str:
+        return str(self.id)
 
 
 class RadicalSessionTestQuestion(models.Model):
@@ -180,8 +198,8 @@ class RadicalSessionTestQuestion(models.Model):
     curr_answer = models.CharField(
         max_length=1,
         choices=Answer.choices,
-        null=True,
         blank=True,
+        default="",
     )
     expected_answer = models.CharField(max_length=1, choices=Answer.choices)
 
@@ -193,3 +211,6 @@ class RadicalSessionTestQuestion(models.Model):
                 name="uniq_test_question_number",
             ),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.test_id}:{self.number}"

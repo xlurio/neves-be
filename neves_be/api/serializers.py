@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from rest_framework import serializers
 
 from neves_be.radicals.models import Radical
@@ -8,48 +10,83 @@ from neves_be.radicals.models import RadicalSessionTest
 from neves_be.radicals.models import RadicalSessionTestQuestion
 
 
+class CamelCaseAliasSerializerMixin:
+    camel_case_aliases: ClassVar[dict[str, str]] = {}
+
+    def _rename_camel_case_fields(self, fields):
+        for snake_case_name, camel_case_name in self.camel_case_aliases.items():
+            fields[camel_case_name] = fields.pop(snake_case_name)
+        return fields
+
+
 class UserCreateResponseSerializer(serializers.Serializer):
     id = serializers.CharField()
     username = serializers.CharField()
     password = serializers.CharField()
 
 
-class UserStatisticsSerializer(serializers.Serializer):
-    chineseLogographicSystem = serializers.DictField(child=serializers.FloatField())
+class UserStatisticsSerializer(CamelCaseAliasSerializerMixin, serializers.Serializer):
+    chinese_logographic_system = serializers.DictField(
+        child=serializers.FloatField(),
+    )
+    camel_case_aliases = {
+        "chinese_logographic_system": "chineseLogographicSystem",
+    }
+
+    def get_fields(self):
+        fields = super().get_fields()
+        return self._rename_camel_case_fields(fields)
 
 
-class RadicalSessionSerializer(serializers.ModelSerializer):
-    createdAt = serializers.DateTimeField(source="created_at")
-    numOfRadicals = serializers.IntegerField(source="num_of_radicals")
-    highestScore = serializers.IntegerField(source="highest_score")
+class RadicalSessionSerializer(
+    CamelCaseAliasSerializerMixin,
+    serializers.ModelSerializer,
+):
+    camel_case_aliases = {
+        "created_at": "createdAt",
+        "num_of_radicals": "numOfRadicals",
+        "highest_score": "highestScore",
+    }
 
     class Meta:
         model = RadicalSession
-        fields = ["id", "createdAt", "numOfRadicals", "highestScore"]
+        fields = ["id", "created_at", "num_of_radicals", "highest_score"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        return self._rename_camel_case_fields(fields)
 
 
-class RadicalSerializer(serializers.ModelSerializer):
-    mainRepresentation = serializers.SerializerMethodField()
-    otherVars = serializers.SerializerMethodField()
+class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    main_representation = serializers.SerializerMethodField()
+    other_vars = serializers.SerializerMethodField()
     pronounce = serializers.SerializerMethodField()
+    camel_case_aliases = {
+        "main_representation": "mainRepresentation",
+        "other_vars": "otherVars",
+    }
 
     class Meta:
         model = Radical
         fields = [
             "id",
-            "mainRepresentation",
-            "otherVars",
+            "main_representation",
+            "other_vars",
             "pinyin",
             "meaning",
             "pronounce",
         ]
 
-    def get_mainRepresentation(self, instance: Radical) -> int:
+    def get_fields(self):
+        fields = super().get_fields()
+        return self._rename_camel_case_fields(fields)
+
+    def get_main_representation(self, instance: Radical) -> int:
         if instance.main_representation is not None:
             return instance.main_representation
         return ord(instance.id[0]) if instance.id else 0
 
-    def get_otherVars(self, instance: Radical) -> list[int]:
+    def get_other_vars(self, instance: Radical) -> list[int]:
         if isinstance(instance.other_vars, list):
             return [int(value) for value in instance.other_vars]
         return []
@@ -70,17 +107,31 @@ class RadicalSerializer(serializers.ModelSerializer):
         return instance.pronounce
 
 
-class RadicalSessionTestSerializer(serializers.ModelSerializer):
-    finishedAt = serializers.DateTimeField(source="finished_at", allow_null=True)
+class RadicalSessionTestSerializer(
+    CamelCaseAliasSerializerMixin,
+    serializers.ModelSerializer,
+):
+    camel_case_aliases = {
+        "finished_at": "finishedAt",
+    }
 
     class Meta:
         model = RadicalSessionTest
-        fields = ["id", "finishedAt", "score"]
+        fields = ["id", "finished_at", "score"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        return self._rename_camel_case_fields(fields)
 
 
-class RadicalSessionTestQuestionResultSerializer(serializers.ModelSerializer):
-    currAnswer = serializers.CharField(source="curr_answer")
-    expectedAnswer = serializers.CharField(source="expected_answer")
+class RadicalSessionTestQuestionResultSerializer(
+    CamelCaseAliasSerializerMixin,
+    serializers.ModelSerializer,
+):
+    camel_case_aliases = {
+        "curr_answer": "currAnswer",
+        "expected_answer": "expectedAnswer",
+    }
 
     class Meta:
         model = RadicalSessionTestQuestion
@@ -88,7 +139,11 @@ class RadicalSessionTestQuestionResultSerializer(serializers.ModelSerializer):
             "type",
             "question",
             "alternatives",
-            "currAnswer",
-            "expectedAnswer",
+            "curr_answer",
+            "expected_answer",
             "audio",
         ]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        return self._rename_camel_case_fields(fields)

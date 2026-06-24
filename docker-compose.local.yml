@@ -28,6 +28,8 @@ services:
       dockerfile: ./compose/production/postgres/Dockerfile
     image: neves_be_production_postgres
     container_name: neves_be_local_postgres
+    ports:
+      - 5434:5432
     volumes:
       - neves_be_local_postgres_data:/var/lib/postgresql/18/docker
       - neves_be_local_postgres_data_backups:/backups

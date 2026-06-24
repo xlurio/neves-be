@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import random
 from json import JSONDecodeError
+from typing import TYPE_CHECKING
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login
 from django.db import models
 from django.db import transaction
-from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -18,7 +18,6 @@ from rest_framework.decorators import permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.request import Request
 from rest_framework.response import Response
 
 from neves_be.api.serializers import RadicalSerializer
@@ -30,8 +29,14 @@ from neves_be.radicals.models import RadicalSessionRadical
 from neves_be.radicals.models import RadicalSessionTest
 from neves_be.radicals.models import RadicalSessionTestQuestion
 
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from rest_framework.request import Request
+
 User = get_user_model()
 ANSWER_CHOICES = ["a", "b", "c", "d", "e"]
+MINIMUM_TEST_POOL_SIZE = len(ANSWER_CHOICES)
+DEFAULT_SESSION_RADICAL_LIMIT = 20
 QUESTION_TYPES = [
     RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM,
     RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO,
@@ -67,7 +72,7 @@ def error_response(
 def _safe_pronounce_url(request: Request, pronounce: str) -> str:
     if not pronounce:
         return ""
-    if pronounce.startswith("http://") or pronounce.startswith("https://"):
+    if pronounce.startswith(("http://", "https://")):
         return pronounce
     if pronounce.startswith("/"):
         return request.build_absolute_uri(pronounce)
@@ -141,7 +146,7 @@ def _get_session_radicals(session: RadicalSession) -> list[Radical]:
     ]
     if linked_radicals:
         return linked_radicals
-    return list(Radical.objects.order_by("id")[:20])
+    return list(Radical.objects.order_by("id")[:DEFAULT_SESSION_RADICAL_LIMIT])
 
 
 def _serialize_question_payload(
@@ -175,7 +180,7 @@ def _ensure_user_default_session(user) -> None:
     if RadicalSession.objects.filter(user=user).exists():
         return
 
-    radicals = list(Radical.objects.order_by("id")[:20])
+    radicals = list(Radical.objects.order_by("id")[:DEFAULT_SESSION_RADICAL_LIMIT])
     if not radicals:
         return
 
@@ -312,7 +317,9 @@ def radical_session_radicals_view(request: Request, session_id) -> Response:
     ).order_by("id")
 
     if not radicals_qs.exists():
-        radicals_qs = Radical.objects.order_by("id")[: session.num_of_radicals or 20]
+        radicals_qs = Radical.objects.order_by("id")[
+            : session.num_of_radicals or DEFAULT_SESSION_RADICAL_LIMIT
+        ]
 
     paginator = DefaultPagination()
     page = paginator.paginate_queryset(radicals_qs, request)
@@ -334,7 +341,7 @@ def radical_session_tests_view(request: Request, session_id) -> Response:
 
     session_radicals = _get_session_radicals(session)
     pool = list(Radical.objects.order_by("id"))
-    if len(pool) < 5 or not session_radicals:
+    if len(pool) < MINIMUM_TEST_POOL_SIZE or not session_radicals:
         return error_response(
             "NOT_ENOUGH_RADICALS",
             "Could not create test",
@@ -460,7 +467,7 @@ def radical_test_finish_view(request: Request, test_id) -> Response:
     test = _owned_test_or_404(request, test_id)
 
     unanswered_question = (
-        test.questions.filter(curr_answer__isnull=True).order_by("number").first()
+        test.questions.filter(curr_answer="").order_by("number").first()
     )
     if unanswered_question is not None:
         return error_response(
@@ -475,9 +482,7 @@ def radical_test_finish_view(request: Request, test_id) -> Response:
     correct_answers = test.questions.filter(
         curr_answer=models.F("expected_answer"),
     ).count()
-    score = (
-        int(round((correct_answers / total_questions) * 100)) if total_questions else 0
-    )
+    score = round((correct_answers / total_questions) * 100) if total_questions else 0
 
     test.score = score
     test.finished_at = timezone.now()

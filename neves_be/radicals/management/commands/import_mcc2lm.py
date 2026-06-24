@@ -80,6 +80,172 @@ def normalize_pinyin_for_filename(pinyin: str) -> str:
     return re.sub(r"[^a-zv]", "", normalized)
 
 
+def _reset_radical_learning_tables() -> None:
+    RadicalSessionTestQuestion.objects.all().delete()
+    RadicalSessionTest.objects.all().delete()
+    RadicalSessionRadical.objects.all().delete()
+    RadicalSession.objects.all().delete()
+    WordSentenceMap.objects.all().delete()
+    LogogramWordMap.objects.all().delete()
+    RadicalLogogramMap.objects.all().delete()
+    Sentence.objects.all().delete()
+    Word.objects.all().delete()
+    Logogram.objects.all().delete()
+    Radical.objects.all().delete()
+
+
+def _build_radical_models(
+    radicals_rows: list[sqlite3.Row],
+    audio_dir: Path,
+) -> tuple[list[Radical], int]:
+    radical_models: list[Radical] = []
+    missing_audio_count = 0
+
+    for row in radicals_rows:
+        radical_id = str(_row_value(row, "ID"))
+        pinyin = str(_row_value(row, "PINYIN"))
+        normalized = normalize_pinyin_for_filename(pinyin)
+        pronounce = ""
+
+        if normalized and audio_dir.exists():
+            matches = sorted(audio_dir.glob(f"{normalized}[0-9].mp3"))
+            if matches:
+                pronounce = f"/audio-cmn/18k-abr/syllabs/{matches[0].name}"
+
+        if not pronounce:
+            missing_audio_count += 1
+
+        radical_models.append(
+            Radical(
+                id=radical_id,
+                pinyin=pinyin,
+                meaning=str(_row_value(row, "MEANING")),
+                main_representation=ord(radical_id[0]) if radical_id else None,
+                other_vars=[],
+                pronounce=pronounce,
+            ),
+        )
+
+    return radical_models, missing_audio_count
+
+
+def _import_logograms(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    logogram_rows = cursor.execute("SELECT * FROM MCC2LM_LOGOGRAM").fetchall()
+    Logogram.objects.bulk_create(
+        [
+            Logogram(
+                id=str(_row_value(row, "ID")),
+                occurrences=int(_row_value(row, "OCCURRENCIES", 0) or 0),
+                pinyin=str(_row_value(row, "PINYIN")),
+                meaning=str(_row_value(row, "MEANING")),
+            )
+            for row in logogram_rows
+        ],
+        batch_size=batch_size,
+    )
+
+
+def _import_radical_logogram_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    map_rows = cursor.execute(
+        "SELECT LOGOGRAM_ID, RADICAL_ID FROM MCC2LM_RADICAL_LOGOGRAM_MAP",
+    ).fetchall()
+    RadicalLogogramMap.objects.bulk_create(
+        [
+            RadicalLogogramMap(
+                logogram_id=str(_row_value(row, "LOGOGRAM_ID")),
+                radical_id=str(_row_value(row, "RADICAL_ID")),
+            )
+            for row in map_rows
+        ],
+        batch_size=batch_size,
+        ignore_conflicts=True,
+    )
+
+
+def _import_words(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    word_rows = cursor.execute("SELECT * FROM MCC2LM_WORD").fetchall()
+    Word.objects.bulk_create(
+        [
+            Word(
+                id=int(_row_value(row, "ID", 0) or 0),
+                value=str(_row_value(row, "VALUE")),
+                pos_tag=str(_row_value(row, "POS_TAG")),
+                occurrences=int(_row_value(row, "OCCURRENCIES", 0) or 0),
+            )
+            for row in word_rows
+        ],
+        batch_size=batch_size,
+    )
+
+
+def _import_logogram_word_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    logogram_word_rows = cursor.execute(
+        "SELECT WORD_ID, LOGOGRAM_ID FROM MCC2LM_LOGOGRAM_WORD_MAP",
+    ).fetchall()
+    LogogramWordMap.objects.bulk_create(
+        [
+            LogogramWordMap(
+                word_id=int(_row_value(row, "WORD_ID", 0) or 0),
+                logogram_id=str(_row_value(row, "LOGOGRAM_ID")),
+            )
+            for row in logogram_word_rows
+        ],
+        batch_size=batch_size,
+        ignore_conflicts=True,
+    )
+
+
+def _import_sentences(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    sentence_rows = cursor.execute("SELECT * FROM MCC2LM_SENTENCE").fetchall()
+    Sentence.objects.bulk_create(
+        [
+            Sentence(
+                id=int(_row_value(row, "ID", 0) or 0),
+                value=str(_row_value(row, "VALUE")),
+            )
+            for row in sentence_rows
+        ],
+        batch_size=batch_size,
+    )
+
+
+def _import_word_sentence_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    word_sentence_rows = cursor.execute(
+        "SELECT SENTENCE_ID, WORD_ID FROM MCC2LM_WORD_SENTENCE_MAP",
+    ).fetchall()
+    WordSentenceMap.objects.bulk_create(
+        [
+            WordSentenceMap(
+                sentence_id=int(_row_value(row, "SENTENCE_ID", 0) or 0),
+                word_id=int(_row_value(row, "WORD_ID", 0) or 0),
+            )
+            for row in word_sentence_rows
+        ],
+        batch_size=batch_size,
+        ignore_conflicts=True,
+    )
+
+
+def _create_default_session(radical_count: int, batch_size: int) -> None:
+    default_session = RadicalSession.objects.create(
+        num_of_radicals=min(20, radical_count),
+    )
+    RadicalSessionRadical.objects.bulk_create(
+        [
+            RadicalSessionRadical(
+                session=default_session,
+                radical=radical,
+                position=position,
+            )
+            for position, radical in enumerate(
+                Radical.objects.order_by("id")[: default_session.num_of_radicals],
+                start=1,
+            )
+        ],
+        batch_size=batch_size,
+    )
+
+
 class Command(BaseCommand):
     help = "Import radicals and LCMC linguistic data from MCC2LM SQLite into Django DB"
 
@@ -92,7 +258,8 @@ class Command(BaseCommand):
         batch_size = int(options["batch_size"])
 
         if not sqlite_path.exists():
-            raise CommandError(f"SQLite file not found: {sqlite_path}")
+            msg = f"SQLite file not found: {sqlite_path}"
+            raise CommandError(msg)
 
         audio_dir = Path(settings.BASE_DIR) / "audio-cmn" / "18k-abr" / "syllabs"
         if not audio_dir.exists():
@@ -105,161 +272,22 @@ class Command(BaseCommand):
             cursor = source_db.cursor()
 
             with transaction.atomic():
-                RadicalSessionTestQuestion.objects.all().delete()
-                RadicalSessionTest.objects.all().delete()
-                RadicalSessionRadical.objects.all().delete()
-                RadicalSession.objects.all().delete()
-                WordSentenceMap.objects.all().delete()
-                LogogramWordMap.objects.all().delete()
-                RadicalLogogramMap.objects.all().delete()
-                Sentence.objects.all().delete()
-                Word.objects.all().delete()
-                Logogram.objects.all().delete()
-                Radical.objects.all().delete()
+                _reset_radical_learning_tables()
 
-                radicals_rows = cursor.execute(
-                    "SELECT * FROM MCC2LM_RADICAL",
-                ).fetchall()
-                radical_models: list[Radical] = []
-                missing_audio_count = 0
-
-                for row in radicals_rows:
-                    radical_id = str(_row_value(row, "ID"))
-                    pinyin = str(_row_value(row, "PINYIN"))
-                    normalized = normalize_pinyin_for_filename(pinyin)
-                    pronounce = ""
-
-                    if normalized and audio_dir.exists():
-                        matches = sorted(audio_dir.glob(f"{normalized}[0-9].mp3"))
-                        if matches:
-                            pronounce = f"/audio-cmn/18k-abr/syllabs/{matches[0].name}"
-
-                    if not pronounce:
-                        missing_audio_count += 1
-
-                    radical_models.append(
-                        Radical(
-                            id=radical_id,
-                            pinyin=pinyin,
-                            meaning=str(_row_value(row, "MEANING")),
-                            main_representation=ord(radical_id[0])
-                            if radical_id
-                            else None,
-                            other_vars=[],
-                            pronounce=pronounce,
-                        ),
-                    )
-
+                radicals_query = "SELECT * FROM MCC2LM_RADICAL"
+                radicals_rows = cursor.execute(radicals_query).fetchall()
+                radical_models, missing_audio_count = _build_radical_models(
+                    radicals_rows,
+                    audio_dir,
+                )
                 Radical.objects.bulk_create(radical_models, batch_size=batch_size)
-
-                logogram_rows = cursor.execute(
-                    "SELECT * FROM MCC2LM_LOGOGRAM",
-                ).fetchall()
-                Logogram.objects.bulk_create(
-                    [
-                        Logogram(
-                            id=str(_row_value(row, "ID")),
-                            occurrences=int(_row_value(row, "OCCURRENCIES", 0) or 0),
-                            pinyin=str(_row_value(row, "PINYIN")),
-                            meaning=str(_row_value(row, "MEANING")),
-                        )
-                        for row in logogram_rows
-                    ],
-                    batch_size=batch_size,
-                )
-
-                map_rows = cursor.execute(
-                    "SELECT LOGOGRAM_ID, RADICAL_ID FROM MCC2LM_RADICAL_LOGOGRAM_MAP",
-                ).fetchall()
-                RadicalLogogramMap.objects.bulk_create(
-                    [
-                        RadicalLogogramMap(
-                            logogram_id=str(_row_value(row, "LOGOGRAM_ID")),
-                            radical_id=str(_row_value(row, "RADICAL_ID")),
-                        )
-                        for row in map_rows
-                    ],
-                    batch_size=batch_size,
-                    ignore_conflicts=True,
-                )
-
-                word_rows = cursor.execute("SELECT * FROM MCC2LM_WORD").fetchall()
-                Word.objects.bulk_create(
-                    [
-                        Word(
-                            id=int(_row_value(row, "ID", 0) or 0),
-                            value=str(_row_value(row, "VALUE")),
-                            pos_tag=str(_row_value(row, "POS_TAG")),
-                            occurrences=int(_row_value(row, "OCCURRENCIES", 0) or 0),
-                        )
-                        for row in word_rows
-                    ],
-                    batch_size=batch_size,
-                )
-
-                logogram_word_rows = cursor.execute(
-                    "SELECT WORD_ID, LOGOGRAM_ID FROM MCC2LM_LOGOGRAM_WORD_MAP",
-                ).fetchall()
-                LogogramWordMap.objects.bulk_create(
-                    [
-                        LogogramWordMap(
-                            word_id=int(_row_value(row, "WORD_ID", 0) or 0),
-                            logogram_id=str(_row_value(row, "LOGOGRAM_ID")),
-                        )
-                        for row in logogram_word_rows
-                    ],
-                    batch_size=batch_size,
-                    ignore_conflicts=True,
-                )
-
-                sentence_rows = cursor.execute(
-                    "SELECT * FROM MCC2LM_SENTENCE",
-                ).fetchall()
-                Sentence.objects.bulk_create(
-                    [
-                        Sentence(
-                            id=int(_row_value(row, "ID", 0) or 0),
-                            value=str(_row_value(row, "VALUE")),
-                        )
-                        for row in sentence_rows
-                    ],
-                    batch_size=batch_size,
-                )
-
-                word_sentence_rows = cursor.execute(
-                    "SELECT SENTENCE_ID, WORD_ID FROM MCC2LM_WORD_SENTENCE_MAP",
-                ).fetchall()
-                WordSentenceMap.objects.bulk_create(
-                    [
-                        WordSentenceMap(
-                            sentence_id=int(_row_value(row, "SENTENCE_ID", 0) or 0),
-                            word_id=int(_row_value(row, "WORD_ID", 0) or 0),
-                        )
-                        for row in word_sentence_rows
-                    ],
-                    batch_size=batch_size,
-                    ignore_conflicts=True,
-                )
-
-                default_session = RadicalSession.objects.create(
-                    num_of_radicals=min(20, len(radical_models)),
-                )
-                RadicalSessionRadical.objects.bulk_create(
-                    [
-                        RadicalSessionRadical(
-                            session=default_session,
-                            radical=radical,
-                            position=position,
-                        )
-                        for position, radical in enumerate(
-                            Radical.objects.order_by("id")[
-                                : default_session.num_of_radicals
-                            ],
-                            start=1,
-                        )
-                    ],
-                    batch_size=batch_size,
-                )
+                _import_logograms(cursor, batch_size)
+                _import_radical_logogram_maps(cursor, batch_size)
+                _import_words(cursor, batch_size)
+                _import_logogram_word_maps(cursor, batch_size)
+                _import_sentences(cursor, batch_size)
+                _import_word_sentence_maps(cursor, batch_size)
+                _create_default_session(len(radical_models), batch_size)
 
         self.stdout.write(self.style.SUCCESS("MCC2LM import finished successfully."))
         self.stdout.write(f"Radicals imported: {Radical.objects.count()}")
