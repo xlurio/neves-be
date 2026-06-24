@@ -1,0 +1,3 @@
+[submodule "audio-cmn"]
+	path = audio-cmn
+	url = git@github.com:hugolpz/audio-cmn.git
