@@ -73,6 +73,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
+    "rest_framework",
     "allauth",
     "allauth.account",
     "allauth.mfa",
@@ -81,6 +82,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "neves_be.users",
+    "radicals",
+    "neves_be.api",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

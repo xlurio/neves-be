@@ -18,10 +18,12 @@ urlpatterns = [
     # User management
     path("users/", include("neves_be.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    path("api/", include("neves_be.api.urls")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    *static("/audio-cmn/", document_root=settings.BASE_DIR / "audio-cmn"),
 ]
 
 

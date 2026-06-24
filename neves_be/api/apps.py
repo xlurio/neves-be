@@ -2,6 +2,6 @@ from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
 
-class RadicalsConfig(AppConfig):
-    name = "radicals"
-    verbose_name = _("Radicals")
+class ApiConfig(AppConfig):
+    name = "neves_be.api"
+    verbose_name = _("API")
