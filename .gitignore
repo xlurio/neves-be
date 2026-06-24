@@ -274,3 +274,6 @@ neves_be/media/
 .ipython/
 .env
 .envs/*
+
+# Artefacts
+*.db*
