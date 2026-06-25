@@ -41,7 +41,7 @@ MEDIA_URL = "http://media.testserver/"
 
 # CORS
 # ------------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
 CORS_ALLOW_CREDENTIALS = True
 
 # Your stuff...
