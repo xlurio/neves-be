@@ -5,11 +5,9 @@ from django.db import models
 
 class Radical(models.Model):
     id = models.CharField(max_length=4, primary_key=True)
-    pinyin = models.TextField(blank=True, default="")
-    meaning = models.TextField(blank=True, default="")
-    main_representation = models.PositiveIntegerField(null=True, blank=True)
-    other_vars = models.JSONField(default=list, blank=True)
-    pronounce = models.CharField(max_length=512, blank=True, default="")
+    pinyin = models.TextField()
+    meaning = models.TextField()
+    pronounce = models.CharField(max_length=512)
 
     class Meta:
         ordering = ["id"]

@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
 from neves_be.radical_sessions.serializers import RadicalSessionSerializer
-from neves_be.radical_sessions.services import ensure_user_default_session
 from neves_be.radical_sessions.services import owned_session_or_404
 from neves_be.radicals.models import Radical
 from neves_be.radicals.serializers import RadicalSerializer
@@ -54,7 +53,6 @@ def stats_me_view(request: Request) -> Response:
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def radical_sessions_view(request: Request) -> Response:
-    ensure_user_default_session(request.user)
     queryset = RadicalSession.objects.filter(user=request.user).order_by("-created_at")
     paginator = DefaultPagination()
     page = paginator.paginate_queryset(queryset, request)

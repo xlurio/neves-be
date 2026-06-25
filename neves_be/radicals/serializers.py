@@ -17,11 +17,9 @@ if TYPE_CHECKING:
 
 class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
     main_representation = serializers.SerializerMethodField()
-    other_vars = serializers.SerializerMethodField()
     pronounce = serializers.SerializerMethodField()
     camel_case_aliases = {
         "main_representation": "mainRepresentation",
-        "other_vars": "otherVars",
     }
 
     class Meta:
@@ -29,7 +27,6 @@ class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializ
         fields = [
             "id",
             "main_representation",
-            "other_vars",
             "pinyin",
             "meaning",
             "pronounce",
@@ -43,11 +40,6 @@ class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializ
         if instance.main_representation is not None:
             return instance.main_representation
         return ord(instance.id[0]) if instance.id else 0
-
-    def get_other_vars(self, instance: Radical) -> list[int]:
-        if isinstance(instance.other_vars, list):
-            return [int(value) for value in instance.other_vars]
-        return []
 
     def get_pronounce(self, instance: Radical) -> str:
         if not instance.pronounce:

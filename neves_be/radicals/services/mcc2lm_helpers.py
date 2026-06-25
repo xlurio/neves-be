@@ -102,7 +102,7 @@ def build_radical_models(
         normalized = normalize_pinyin_for_filename(pinyin)
         pronounce = ""
         if normalized and audio_dir.exists():
-            matches = sorted(audio_dir.glob(f"{normalized}[0-9].mp3"))
+            matches = sorted(audio_dir.glob(f"cmn-{normalized}[0-9].mp3"))
             if matches:
                 pronounce = f"/audio-cmn/18k-abr/syllabs/{matches[0].name}"
         if not pronounce:
@@ -112,8 +112,6 @@ def build_radical_models(
                 id=radical_id,
                 pinyin=pinyin,
                 meaning=str(row_value(row, "MEANING")),
-                main_representation=ord(radical_id[0]) if radical_id else None,
-                other_vars=[],
                 pronounce=pronounce,
             ),
         )
