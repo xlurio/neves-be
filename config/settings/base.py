@@ -82,7 +82,8 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "neves_be.users",
     "neves_be.radicals.apps.RadicalsConfig",
-    "neves_be.api",
+    "neves_be.radical_sessions.apps.RadicalSessionsConfig",
+    "neves_be.radical_tests.apps.RadicalTestsConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

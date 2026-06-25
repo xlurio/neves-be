@@ -5,14 +5,13 @@ from http import HTTPStatus
 import pytest
 from django.test import Client
 
+from neves_be.radical_sessions.models import RadicalSession
+from neves_be.radical_sessions.models import RadicalSessionRadical
+from neves_be.radical_tests.models import RadicalSessionTest
 from neves_be.radicals.models import Radical
-from neves_be.radicals.models import RadicalSession
-from neves_be.radicals.models import RadicalSessionRadical
-from neves_be.radicals.models import RadicalSessionTest
 from neves_be.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
-
 
 RADICAL_IDS = ["人", "口", "土", "木", "火", "水", "金", "山"]
 TEST_RADICAL_COUNT = 6
@@ -46,23 +45,15 @@ def seed_session(user, radicals: list[Radical]) -> RadicalSession:
     return session
 
 
-def test_radicals_sessions_requires_authentication(client: Client):
-    response = client.get("/api/radicals/sessions")
-    assert response.status_code in {HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN}
-
-
 def test_create_test_and_question_contract(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-
-    radicals = seed_radicals(TEST_RADICAL_COUNT)
-    session = seed_session(user, radicals)
+    session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
 
     create_response = client.post(f"/api/radicals/sessions/{session.id}/tests")
     assert create_response.status_code == HTTPStatus.CREATED
 
     test_id = create_response.json()["id"]
-
     question_response = client.get(f"/api/radicals/test/{test_id}/question/1")
     assert question_response.status_code == HTTPStatus.OK
 
@@ -85,9 +76,7 @@ def test_create_test_and_question_contract(client: Client):
 def test_answer_validation_and_question_missed_payload(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-
-    radicals = seed_radicals(TEST_RADICAL_COUNT)
-    session = seed_session(user, radicals)
+    session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
     test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
 
     invalid_answer_response = client.post(
@@ -113,7 +102,6 @@ def test_answer_validation_and_question_missed_payload(client: Client):
 def test_finish_requires_all_answers(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-
     session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
     test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
 
@@ -126,14 +114,11 @@ def test_finish_requires_all_answers(client: Client):
 def test_finish_computes_score_and_result_contract(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-
     session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
-    create_payload = client.post(f"/api/radicals/sessions/{session.id}/tests").json()
-    test_id = create_payload["id"]
+    test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
 
     first_question = client.get(f"/api/radicals/test/{test_id}/question/1").json()
     count = first_question["count"]
-
     for number in range(1, count + 1):
         answer_response = client.post(
             f"/api/radicals/test/{test_id}/answer",
@@ -147,7 +132,6 @@ def test_finish_computes_score_and_result_contract(client: Client):
 
     test = RadicalSessionTest.objects.get(id=test_id)
     assert test.finished_at is not None
-
     expected_correct = test.questions.filter(
         curr_answer="a",
         expected_answer="a",

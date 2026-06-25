@@ -1,0 +1,85 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from rest_framework.decorators import api_view
+from rest_framework.decorators import permission_classes
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from neves_be.radical_sessions.models import RadicalSession
+from neves_be.radical_sessions.models import RadicalSessionRadical
+from neves_be.radical_sessions.serializers import RadicalSessionSerializer
+from neves_be.radical_sessions.services import ensure_user_default_session
+from neves_be.radical_sessions.services import owned_session_or_404
+from neves_be.radicals.models import Radical
+from neves_be.radicals.serializers import RadicalSerializer
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from rest_framework.request import Request
+
+
+class DefaultPagination(PageNumberPagination):
+    page_size = 10
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def stats_me_view(request: Request) -> Response:
+    total_radicals = Radical.objects.count()
+    radicals_learned = (
+        RadicalSessionRadical.objects.filter(session__user=request.user)
+        .values("radical_id")
+        .distinct()
+        .count()
+    )
+    progress = (
+        round((radicals_learned / total_radicals) * 100, 2) if total_radicals else 0.0
+    )
+    return Response(
+        {
+            "chineseLogographicSystem": {
+                "radicalsLearned": radicals_learned,
+                "totalRadicals": total_radicals,
+                "progress": progress,
+            },
+        },
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def radical_sessions_view(request: Request) -> Response:
+    ensure_user_default_session(request.user)
+    queryset = RadicalSession.objects.filter(user=request.user).order_by("-created_at")
+    paginator = DefaultPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    return paginator.get_paginated_response(
+        RadicalSessionSerializer(page, many=True).data,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def radical_session_detail_view(request: Request, session_id) -> Response:
+    return Response(
+        RadicalSessionSerializer(owned_session_or_404(request, session_id)).data,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def radical_session_radicals_view(request: Request, session_id) -> Response:
+    session = owned_session_or_404(request, session_id)
+    radicals_qs: QuerySet[Radical] = Radical.objects.filter(
+        id__in=session.session_radicals.values("radical_id"),
+    ).order_by("id")
+    if not radicals_qs.exists():
+        radicals_qs = Radical.objects.order_by("id")[: session.num_of_radicals or 20]
+
+    paginator = DefaultPagination()
+    page = paginator.paginate_queryset(radicals_qs, request)
+    serializer = RadicalSerializer(page, many=True, context={"request": request})
+    return paginator.get_paginated_response(serializer.data)

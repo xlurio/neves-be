@@ -136,7 +136,7 @@ lint.ignore = [
   "S311",   # Random is useful unless used for cryptography,
   "SIM102"
 ]
-lint.exclude = [ "config", "manage.py", "tests", "**/migrations/*.py" ]
+lint.exclude = [ "**/migrations/*.py", "config", "manage.py", "tests" ]
 lint.isort.force-single-line = true
 lint.pylint.max-statements = 30
 

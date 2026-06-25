@@ -18,7 +18,7 @@ urlpatterns = [
     # User management
     path("users/", include("neves_be.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
-    path("api/", include("neves_be.api.urls")),
+    path("api/", include("config.api.urls")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
