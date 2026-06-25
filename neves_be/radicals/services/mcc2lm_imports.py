@@ -2,11 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from neves_be.radical_sessions.models import RadicalSession
-from neves_be.radical_sessions.models import RadicalSessionRadical
 from neves_be.radicals.models import Logogram
 from neves_be.radicals.models import LogogramWordMap
-from neves_be.radicals.models import Radical
 from neves_be.radicals.models import RadicalLogogramMap
 from neves_be.radicals.models import Sentence
 from neves_be.radicals.models import Word
@@ -111,24 +108,4 @@ def import_word_sentence_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:
         ],
         batch_size=batch_size,
         ignore_conflicts=True,
-    )
-
-
-def create_default_session(radical_count: int, batch_size: int) -> None:
-    default_session = RadicalSession.objects.create(
-        num_of_radicals=min(20, radical_count),
-    )
-    RadicalSessionRadical.objects.bulk_create(
-        [
-            RadicalSessionRadical(
-                session=default_session,
-                radical=radical,
-                position=position,
-            )
-            for position, radical in enumerate(
-                Radical.objects.order_by("id")[: default_session.num_of_radicals],
-                start=1,
-            )
-        ],
-        batch_size=batch_size,
     )

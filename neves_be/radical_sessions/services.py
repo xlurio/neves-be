@@ -33,3 +33,7 @@ def owned_session_or_404(request: Request, session_id: SessionId) -> RadicalSess
         msg = "Radical session not found."
         raise Http404(msg)
     return session
+
+
+def create_radical_session(request: Request) -> RadicalSession:
+    return RadicalSession.objects.create(user=request.user)

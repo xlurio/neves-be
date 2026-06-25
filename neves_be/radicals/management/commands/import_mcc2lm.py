@@ -16,7 +16,6 @@ from neves_be.radicals.models import Sentence
 from neves_be.radicals.models import Word
 from neves_be.radicals.services.mcc2lm_helpers import build_radical_models
 from neves_be.radicals.services.mcc2lm_helpers import reset_radical_learning_tables
-from neves_be.radicals.services.mcc2lm_imports import create_default_session
 from neves_be.radicals.services.mcc2lm_imports import import_logogram_word_maps
 from neves_be.radicals.services.mcc2lm_imports import import_logograms
 from neves_be.radicals.services.mcc2lm_imports import import_radical_logogram_maps
@@ -66,7 +65,6 @@ class Command(BaseCommand):
                 import_logogram_word_maps(cursor, batch_size)
                 import_sentences(cursor, batch_size)
                 import_word_sentence_maps(cursor, batch_size)
-                create_default_session(len(radical_models), batch_size)
 
         self.stdout.write(self.style.SUCCESS("MCC2LM import finished successfully."))
         self.stdout.write(f"Radicals imported: {Radical.objects.count()}")
