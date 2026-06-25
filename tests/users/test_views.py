@@ -15,10 +15,10 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from neves_be.users.forms import UserAdminChangeForm
-from neves_be.users.tests.factories import UserFactory
 from neves_be.users.views import UserRedirectView
 from neves_be.users.views import UserUpdateView
 from neves_be.users.views import user_detail_view
+from tests.users.factories import UserFactory
 
 if TYPE_CHECKING:
     from django.test import RequestFactory

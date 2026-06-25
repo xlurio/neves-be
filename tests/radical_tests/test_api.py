@@ -9,7 +9,7 @@ from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
 from neves_be.radical_tests.models import RadicalSessionTest
 from neves_be.radicals.models import Radical
-from neves_be.users.tests.factories import UserFactory
+from tests.users.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
