@@ -3,6 +3,7 @@ from __future__ import annotations
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 from typing import TypedDict
 
 from rest_framework.response import Response
@@ -11,8 +12,24 @@ if TYPE_CHECKING:
     from rest_framework.request import Request
 
 
+type ErrorCode = Literal[
+    "INTERNAL_ERROR",
+    "NOT_FOUND",
+    "AUTH_ERROR",
+    "FORBIDDEN",
+    "VALIDATION_ERROR",
+    "REQUEST_ERROR",
+    "INVALID_CREDENTIALS",
+    "USER_EXISTS",
+    "NOT_ENOUGH_RADICALS",
+    "INVALID_QUESTION",
+    "INVALID_ANSWER",
+    "QUESTION_MISSED",
+]
+
+
 class ErrorResponsePayload(TypedDict):
-    code: str
+    code: ErrorCode
     title: str
     details: str
     payload: dict[str, Any]
@@ -28,7 +45,7 @@ def load_request_data(request: Request) -> dict[str, Any]:
 
 
 def error_response(
-    code: str,
+    code: ErrorCode,
     title: str,
     details: str,
     *,

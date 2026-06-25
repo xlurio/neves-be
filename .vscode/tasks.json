@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "verify-strict-types",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"scripts/verify.sh"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify-strict-types",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"scripts/verify.sh"
+			],
+			"isBackground": false
+		}
+	]
+}
