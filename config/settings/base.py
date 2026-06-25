@@ -290,7 +290,7 @@ SOCIALACCOUNT_FORMS = {"signup": "neves_be.users.forms.UserSocialSignupForm"}
 # ------------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env.list(
     "DJANGO_CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:8000"],
+    default=["http://localhost:5173"],
 )
 CORS_ALLOW_CREDENTIALS = env.bool("DJANGO_CORS_ALLOW_CREDENTIALS", default=True)
 
