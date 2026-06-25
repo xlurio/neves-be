@@ -38,5 +38,11 @@ TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore[index]
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "http://media.testserver/"
+
+# CORS
+# ------------------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
+CORS_ALLOW_CREDENTIALS = True
+
 # Your stuff...
 # ------------------------------------------------------------------------------

@@ -9,3 +9,6 @@ up:
 
 uppostgres:
 	$(dockercomposeup) postgres
+
+down:
+	$(dockercompose) down -v

@@ -125,6 +125,10 @@ EMAIL_SUBJECT_PREFIX = env(
 )
 ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 
+# CORS
+# ------------------------------------------------------------------------------
+CORS_ALLOW_CREDENTIALS = True
+
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL regex.
