@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.db import models
-from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -70,7 +70,10 @@ def radical_test_question_view(
 ) -> Response:
     test = owned_test_or_404(request, test_id)
     total_questions = test.questions.count()
-    question = get_object_or_404(test.questions, number=question_num)
+    question = test.questions.filter(number=question_num).first()
+    if question is None:
+        msg = "Question not found for this test."
+        raise Http404(msg)
     next_url = (
         request.build_absolute_uri(
             reverse(

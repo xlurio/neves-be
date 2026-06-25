@@ -79,6 +79,10 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
 ]
 
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "neves_be.common.exception_handlers.custom_exception_handler",
+}
+
 LOCAL_APPS = [
     "neves_be.users",
     "neves_be.radicals.apps.RadicalsConfig",
@@ -104,9 +108,9 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+LOGIN_REDIRECT_URL = "/api/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "account_login"
+LOGIN_URL = "admin:login"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------

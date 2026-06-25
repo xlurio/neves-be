@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.db import transaction
-from django.shortcuts import get_object_or_404
+from django.http import Http404
 
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
@@ -28,7 +28,11 @@ def get_session_radicals(session: RadicalSession) -> list[Radical]:
 
 
 def owned_session_or_404(request: Request, session_id) -> RadicalSession:
-    return get_object_or_404(RadicalSession, id=session_id, user=request.user)
+    session = RadicalSession.objects.filter(id=session_id, user=request.user).first()
+    if session is None:
+        msg = "Radical session not found."
+        raise Http404(msg)
+    return session
 
 
 def ensure_user_default_session(user) -> None:

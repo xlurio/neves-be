@@ -163,3 +163,7 @@ def test_user_cannot_access_other_users_test(client: Client):
     client.force_login(other_user)
     response = client.get(f"/api/radicals/test/{test_id}/question/1")
     assert response.status_code == HTTPStatus.NOT_FOUND
+    payload = response.json()
+    assert payload["code"] == "NOT_FOUND"
+    assert "title" in payload
+    assert "details" in payload

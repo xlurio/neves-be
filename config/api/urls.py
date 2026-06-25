@@ -1,7 +1,7 @@
 from django.urls import include
 from django.urls import path
 
-from neves_be.users.urls import api_urlpatterns as users_api_urlpatterns
+from neves_be.users.urls import urlpatterns as users_api_urlpatterns
 
 urlpatterns = [
     path("", include(users_api_urlpatterns)),

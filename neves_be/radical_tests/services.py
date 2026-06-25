@@ -4,7 +4,7 @@ import random
 from typing import TYPE_CHECKING
 
 from django.db import transaction
-from django.shortcuts import get_object_or_404
+from django.http import Http404
 
 from neves_be.radical_sessions.services import get_session_radicals
 from neves_be.radical_tests.models import RadicalSessionTest
@@ -97,11 +97,18 @@ def serialize_question_payload(
 
 
 def owned_test_or_404(request: Request, test_id) -> RadicalSessionTest:
-    return get_object_or_404(
-        RadicalSessionTest.objects.select_related("session"),
-        id=test_id,
-        session__user=request.user,
+    test = (
+        RadicalSessionTest.objects.select_related("session")
+        .filter(
+            id=test_id,
+            session__user=request.user,
+        )
+        .first()
     )
+    if test is None:
+        msg = "Radical test not found."
+        raise Http404(msg)
+    return test
 
 
 def create_session_test(
