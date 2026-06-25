@@ -5,10 +5,12 @@ from typing import TYPE_CHECKING
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login
+from django.contrib.auth import logout
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from neves_be.common.api import error_response
@@ -81,3 +83,10 @@ def user_create_view(request: Request) -> Response:
         },
         status=status.HTTP_201_CREATED,
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_view(request: Request) -> Response:
+    logout(request)
+    return Response(status=status.HTTP_204_NO_CONTENT)
