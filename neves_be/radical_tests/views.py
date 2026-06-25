@@ -26,6 +26,9 @@ from neves_be.radical_tests.services import serialize_result_questions
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
+    from neves_be.radical_sessions.types import SessionId
+    from neves_be.radical_tests.types import TestId
+
 
 class DefaultPagination(PageNumberPagination):
     page_size = 10
@@ -33,7 +36,7 @@ class DefaultPagination(PageNumberPagination):
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def radical_session_tests_view(request: Request, session_id) -> Response:
+def radical_session_tests_view(request: Request, session_id: SessionId) -> Response:
     session = owned_session_or_404(request, session_id)
     if request.method == "GET":
         paginator = DefaultPagination()
@@ -65,7 +68,7 @@ def radical_session_tests_view(request: Request, session_id) -> Response:
 @permission_classes([IsAuthenticated])
 def radical_test_question_view(
     request: Request,
-    test_id,
+    test_id: TestId,
     question_num: int,
 ) -> Response:
     test = owned_test_or_404(request, test_id)
@@ -107,7 +110,7 @@ def radical_test_question_view(
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def radical_test_answer_view(request: Request, test_id) -> Response:
+def radical_test_answer_view(request: Request, test_id: TestId) -> Response:
     test = owned_test_or_404(request, test_id)
     data = load_request_data(request)
     try:
@@ -146,7 +149,7 @@ def radical_test_answer_view(request: Request, test_id) -> Response:
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def radical_test_finish_view(request: Request, test_id) -> Response:
+def radical_test_finish_view(request: Request, test_id: TestId) -> Response:
     test = owned_test_or_404(request, test_id)
     unanswered_question = (
         test.questions.filter(curr_answer="").order_by("number").first()
@@ -177,7 +180,7 @@ def radical_test_finish_view(request: Request, test_id) -> Response:
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_test_result_view(request: Request, test_id) -> Response:
+def radical_test_result_view(request: Request, test_id: TestId) -> Response:
     test = owned_test_or_404(request, test_id)
     return Response(
         {

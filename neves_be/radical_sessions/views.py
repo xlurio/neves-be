@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
     from rest_framework.request import Request
 
+    from neves_be.radical_sessions.types import SessionId
+
 
 class DefaultPagination(PageNumberPagination):
     page_size = 10
@@ -63,7 +65,7 @@ def radical_sessions_view(request: Request) -> Response:
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_session_detail_view(request: Request, session_id) -> Response:
+def radical_session_detail_view(request: Request, session_id: SessionId) -> Response:
     return Response(
         RadicalSessionSerializer(owned_session_or_404(request, session_id)).data,
     )
@@ -71,7 +73,7 @@ def radical_session_detail_view(request: Request, session_id) -> Response:
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_session_radicals_view(request: Request, session_id) -> Response:
+def radical_session_radicals_view(request: Request, session_id: SessionId) -> Response:
     session = owned_session_or_404(request, session_id)
     radicals_qs: QuerySet[Radical] = Radical.objects.filter(
         id__in=session.session_radicals.values("radical_id"),

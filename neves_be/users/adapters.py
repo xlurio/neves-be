@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import typing
+from typing import TYPE_CHECKING
+from typing import Any
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from allauth.socialaccount.models import SocialLogin
     from django.http import HttpRequest
 
@@ -30,7 +31,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         self,
         request: HttpRequest,
         sociallogin: SocialLogin,
-        data: dict[str, typing.Any],
+        data: dict[str, Any],
     ) -> User:
         """
         Populates user information from social provider info.

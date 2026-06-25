@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypedDict
 
 from rest_framework.response import Response
 
@@ -9,7 +11,14 @@ if TYPE_CHECKING:
     from rest_framework.request import Request
 
 
-def load_request_data(request: Request) -> dict:
+class ErrorResponsePayload(TypedDict):
+    code: str
+    title: str
+    details: str
+    payload: dict[str, Any]
+
+
+def load_request_data(request: Request) -> dict[str, Any]:
     if isinstance(request.data, dict):
         return request.data
     try:
@@ -24,12 +33,13 @@ def error_response(
     details: str,
     *,
     http_status: int,
-    payload: dict | None = None,
+    payload: dict[str, Any] | None = None,
 ) -> Response:
-    response_payload: dict[str, object] = {
+    response_payload: ErrorResponsePayload = {
         "code": code,
         "title": title,
         "details": details,
+        "payload": {},
     }
     if payload is not None:
         response_payload["payload"] = payload

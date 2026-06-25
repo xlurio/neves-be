@@ -12,6 +12,9 @@ from neves_be.radicals.models import Radical
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
+    from neves_be.radical_sessions.types import SessionId
+    from neves_be.users.models import User
+
 DEFAULT_SESSION_RADICAL_LIMIT = 20
 
 
@@ -27,7 +30,7 @@ def get_session_radicals(session: RadicalSession) -> list[Radical]:
     return list(Radical.objects.order_by("id")[:DEFAULT_SESSION_RADICAL_LIMIT])
 
 
-def owned_session_or_404(request: Request, session_id) -> RadicalSession:
+def owned_session_or_404(request: Request, session_id: SessionId) -> RadicalSession:
     session = RadicalSession.objects.filter(id=session_id, user=request.user).first()
     if session is None:
         msg = "Radical session not found."
@@ -35,7 +38,7 @@ def owned_session_or_404(request: Request, session_id) -> RadicalSession:
     return session
 
 
-def ensure_user_default_session(user) -> None:
+def ensure_user_default_session(user: User) -> None:
     if RadicalSession.objects.filter(user=user).exists():
         return
 

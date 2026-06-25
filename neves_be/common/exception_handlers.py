@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 from django.http import Http404
 from rest_framework import status
+from rest_framework.exceptions import APIException
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.exceptions import PermissionDenied
@@ -16,7 +18,10 @@ if TYPE_CHECKING:
     from rest_framework.response import Response
 
 
-def custom_exception_handler(exc, context) -> Response:
+def custom_exception_handler(
+    exc: Exception | APIException,
+    context: dict[str, Any],
+) -> Response:
     response = exception_handler(exc, context)
 
     if response is None:

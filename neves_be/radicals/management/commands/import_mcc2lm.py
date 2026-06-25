@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 from django.db import transaction
 
 from neves_be.radicals.models import Logogram
@@ -26,11 +28,11 @@ from neves_be.radicals.services.mcc2lm_imports import import_words
 class Command(BaseCommand):
     help = "Import radicals and LCMC linguistic data from MCC2LM SQLite into Django DB"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("sqlite_path", type=str, help="Path to MCC2LM SQLite file")
         parser.add_argument("--batch-size", type=int, default=2000)
 
-    def handle(self, *args, **options):
+    def handle(self, *_args: object, **options: Any) -> None:
         sqlite_path = Path(options["sqlite_path"]).expanduser().resolve()
         batch_size = int(options["batch_size"])
 

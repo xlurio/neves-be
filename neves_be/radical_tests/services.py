@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 from typing import TYPE_CHECKING
+from typing import cast
 
 from django.db import transaction
 from django.http import Http404
@@ -15,17 +16,30 @@ if TYPE_CHECKING:
     from rest_framework.request import Request
 
     from neves_be.radical_sessions.models import RadicalSession
+    from neves_be.radical_tests.types import AlternativePayload
+    from neves_be.radical_tests.types import AnswerChoice
+    from neves_be.radical_tests.types import CurrentAnswer
+    from neves_be.radical_tests.types import QuestionPayload
+    from neves_be.radical_tests.types import QuestionType
+    from neves_be.radical_tests.types import ResultQuestionPayload
+    from neves_be.radical_tests.types import TestId
 
-ANSWER_CHOICES = ["a", "b", "c", "d", "e"]
+ANSWER_CHOICES: tuple[AnswerChoice, ...] = ("a", "b", "c", "d", "e")
 MINIMUM_TEST_POOL_SIZE = len(ANSWER_CHOICES)
-QUESTION_TYPES = [
-    RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM,
-    RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO,
-    RadicalSessionTestQuestion.Type.LOGOGRAM_TO_MEANING,
-    RadicalSessionTestQuestion.Type.LOGOGRAM_TO_PINYIN,
-    RadicalSessionTestQuestion.Type.MEANING_TO_LOGOGRAM,
-    RadicalSessionTestQuestion.Type.PINYIN_TO_LOGOGRAM,
-]
+QUESTION_TYPES: tuple[QuestionType, ...] = (
+    cast("QuestionType", RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM),
+    cast("QuestionType", RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO),
+    cast("QuestionType", RadicalSessionTestQuestion.Type.LOGOGRAM_TO_MEANING),
+    cast("QuestionType", RadicalSessionTestQuestion.Type.LOGOGRAM_TO_PINYIN),
+    cast("QuestionType", RadicalSessionTestQuestion.Type.MEANING_TO_LOGOGRAM),
+    cast("QuestionType", RadicalSessionTestQuestion.Type.PINYIN_TO_LOGOGRAM),
+)
+
+
+def _current_answer(value: str) -> CurrentAnswer:
+    if value in ANSWER_CHOICES:
+        return value
+    return ""
 
 
 def safe_pronounce_url(request: Request, pronounce: str) -> str:
@@ -50,7 +64,7 @@ def pick_option_radicals(
     return options
 
 
-def question_text(radical: Radical, question_type: str) -> str:
+def question_text(radical: Radical, question_type: QuestionType) -> str:
     if question_type == RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM:
         return "What logogram corresponds to the following audio?"
     if question_type == RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO:
@@ -66,9 +80,9 @@ def question_text(radical: Radical, question_type: str) -> str:
 
 def build_alternatives(
     request: Request,
-    question_type: str,
+    question_type: QuestionType,
     options: list[Radical],
-) -> list[dict[str, str]]:
+) -> list[AlternativePayload]:
     if question_type == RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO:
         return [
             {"type": "AUDIO", "payload": safe_pronounce_url(request, option.pronounce)}
@@ -84,19 +98,19 @@ def build_alternatives(
 def serialize_question_payload(
     question: RadicalSessionTestQuestion,
     request: Request,
-) -> dict:
-    payload: dict[str, object] = {
-        "type": question.type,
+) -> QuestionPayload:
+    payload: QuestionPayload = {
+        "type": cast("QuestionType", question.type),
         "question": question.question,
-        "alternatives": question.alternatives,
-        "currAnswer": question.curr_answer,
+        "alternatives": cast("list[AlternativePayload]", question.alternatives),
+        "currAnswer": _current_answer(question.curr_answer),
     }
     if question.audio:
         payload["audio"] = safe_pronounce_url(request, question.audio)
     return payload
 
 
-def owned_test_or_404(request: Request, test_id) -> RadicalSessionTest:
+def owned_test_or_404(request: Request, test_id: TestId) -> RadicalSessionTest:
     test = (
         RadicalSessionTest.objects.select_related("session")
         .filter(
@@ -149,15 +163,15 @@ def create_session_test(
 def serialize_result_questions(
     test: RadicalSessionTest,
     request: Request,
-) -> list[dict[str, object]]:
+) -> list[ResultQuestionPayload]:
     questions = []
     for question in test.questions.order_by("number"):
-        payload: dict[str, object] = {
-            "type": question.type,
+        payload: ResultQuestionPayload = {
+            "type": cast("QuestionType", question.type),
             "question": question.question,
-            "alternatives": question.alternatives,
-            "currAnswer": question.curr_answer or "a",
-            "expectedAnswer": question.expected_answer,
+            "alternatives": cast("list[AlternativePayload]", question.alternatives),
+            "currAnswer": cast("AnswerChoice", question.curr_answer or "a"),
+            "expectedAnswer": cast("AnswerChoice", question.expected_answer),
         }
         if question.audio:
             payload["audio"] = safe_pronounce_url(request, question.audio)
