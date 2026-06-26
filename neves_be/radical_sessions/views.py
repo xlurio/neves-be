@@ -32,7 +32,6 @@ class DefaultPagination(PageNumberPagination):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def stats_me_view(request: Request) -> Response:
-    total_radicals = Radical.objects.count()
     radicals_learned = (
         RadicalSessionRadical.objects.filter(
             session__user=request.user,
@@ -42,14 +41,12 @@ def stats_me_view(request: Request) -> Response:
         .distinct()
         .count()
     )
-    progress = (
-        round((radicals_learned / total_radicals) * 100, 2) if total_radicals else 0.0
-    )
+    progress = round((radicals_learned / 100) * 100, 2)
     return Response(
         {
             "chineseLogographicSystem": {
                 "radicalsLearned": radicals_learned,
-                "totalRadicals": total_radicals,
+                "totalRadicals": 100,
                 "progress": progress,
             },
         },
