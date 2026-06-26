@@ -186,6 +186,7 @@ def radical_test_result_view(request: Request, test_id: TestId) -> Response:
     return Response(
         {
             "id": str(test.id),
+            "radicalsSessionId": test.session.pk,
             "score": test.score,
             "questions": serialize_result_questions(test, request),
         },
