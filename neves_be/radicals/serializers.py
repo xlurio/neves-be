@@ -16,17 +16,12 @@ if TYPE_CHECKING:
 
 
 class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
-    main_representation = serializers.SerializerMethodField()
     pronounce = serializers.SerializerMethodField()
-    camel_case_aliases = {
-        "main_representation": "mainRepresentation",
-    }
 
     class Meta:
         model = Radical
         fields = [
             "id",
-            "main_representation",
             "pinyin",
             "meaning",
             "pronounce",
@@ -35,11 +30,6 @@ class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializ
     def get_fields(self) -> MutableMapping[str, Field]:
         fields = super().get_fields()
         return self._rename_camel_case_fields(fields)
-
-    def get_main_representation(self, instance: Radical) -> int:
-        if instance.main_representation is not None:
-            return instance.main_representation
-        return ord(instance.id[0]) if instance.id else 0
 
     def get_pronounce(self, instance: Radical) -> str:
         if not instance.pronounce:

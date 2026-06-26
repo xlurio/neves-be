@@ -15,7 +15,6 @@ def seed_radical(idx: int) -> Radical:
         id=f"r{idx}",
         pinyin=f"pin{idx}",
         meaning=f"meaning-{idx}",
-        main_representation=0x4E00 + idx,
         pronounce=f"/audio-cmn/18k-abr/syllabs/pin{idx}.mp3",
     )
 

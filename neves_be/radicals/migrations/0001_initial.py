@@ -33,7 +33,6 @@ class Migration(migrations.Migration):
                 ('id', models.CharField(max_length=4, primary_key=True, serialize=False)),
                 ('pinyin', models.TextField(blank=True, default='')),
                 ('meaning', models.TextField(blank=True, default='')),
-                ('main_representation', models.PositiveIntegerField(blank=True, null=True)),
                 ('pronounce', models.CharField(blank=True, default='', max_length=512)),
             ],
             options={

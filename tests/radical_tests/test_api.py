@@ -26,7 +26,6 @@ def seed_radicals(count: int = TEST_RADICAL_COUNT) -> list[Radical]:
             id=RADICAL_IDS[idx],
             pinyin=f"ren{idx + 1}",
             meaning=f"meaning-{idx + 1}",
-            main_representation=ord(RADICAL_IDS[idx]),
             pronounce=f"/audio-cmn/18k-abr/syllabs/ren{idx + 1}.mp3",
         )
         radicals.append(radical)
