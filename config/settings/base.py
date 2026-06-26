@@ -147,6 +147,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "neves_be.common.middleware.ServerErrorTracebackLoggingMiddleware",
 ]
 
 # STATIC

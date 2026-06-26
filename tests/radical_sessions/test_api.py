@@ -96,3 +96,28 @@ def test_radicals_sessions_lists_existing_sessions(client):
     assert payload["previous"] is None
     assert [item["id"] for item in payload["results"]] == expected_session_ids
     assert str(other_session.id) not in [item["id"] for item in payload["results"]]
+
+
+def test_radical_session_detail_returns_full_session_payload(client):
+    user = UserFactory.create()
+    client.force_login(user)
+    expected_num_of_radicals = 7
+    expected_highest_score = 88
+
+    session = RadicalSession.objects.create(
+        user=user,
+        num_of_radicals=expected_num_of_radicals,
+        highest_score=expected_highest_score,
+    )
+
+    response = client.get(f"/api/radicals/sessions/{session.id}")
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.json()
+    assert payload["id"] == str(session.id)
+    assert "createdAt" in payload
+    assert payload["numOfRadicals"] == expected_num_of_radicals
+    assert payload["highestScore"] == expected_highest_score
+    assert "created_at" not in payload
+    assert "num_of_radicals" not in payload
+    assert "highest_score" not in payload
