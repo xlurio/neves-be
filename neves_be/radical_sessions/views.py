@@ -33,7 +33,10 @@ class DefaultPagination(PageNumberPagination):
 def stats_me_view(request: Request) -> Response:
     total_radicals = Radical.objects.count()
     radicals_learned = (
-        RadicalSessionRadical.objects.filter(session__user=request.user)
+        RadicalSessionRadical.objects.filter(
+            session__user=request.user,
+            session__highest_score__gte=7,
+        )
         .values("radical_id")
         .distinct()
         .count()
