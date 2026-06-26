@@ -18,9 +18,13 @@ if TYPE_CHECKING:
 def get_session_radicals(session: RadicalSession) -> list[Radical]:
     return [
         session_radical.radical
-        for session_radical in session.session_radicals.select_related(
+        for session_radical in RadicalSessionRadical.objects.filter(
+            session__user=session.user,
+        )
+        .select_related(
             "radical",
-        ).order_by("position")
+        )
+        .order_by("position")
     ]
 
 
