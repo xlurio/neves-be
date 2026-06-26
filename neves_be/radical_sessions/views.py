@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from django.db import models
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -59,8 +60,14 @@ def stats_me_view(request: Request) -> Response:
 @permission_classes([IsAuthenticated])
 def radical_sessions_view(request: Request) -> Response:
     if request.method == "GET":
-        queryset = RadicalSession.objects.filter(user=request.user).order_by(
-            "-created_at",
+        queryset = (
+            RadicalSession.objects.filter(user=request.user)
+            .annotate(
+                num_of_radicals=models.Count("session_radicals"),
+            )
+            .order_by(
+                "-created_at",
+            )
         )
         paginator = DefaultPagination()
         page = paginator.paginate_queryset(queryset, request)
@@ -87,9 +94,16 @@ def radical_session_radicals_view(request: Request, session_id: SessionId) -> Re
     session = owned_session_or_404(request, session_id)
 
     if request.method == "GET":
-        radicals_qs: QuerySet[Radical] = Radical.objects.filter(
-            id__in=session.session_radicals.values("radical_id"),
-        ).order_by("id")
+        radicals_qs: QuerySet[Radical] = (
+            Radical.objects.filter(
+                id__in=session.session_radicals.values("radical_id"),
+            )
+            .annotate(
+                occurrencies=models.Sum("radical_logograms__logogram__occurrences"),
+            )
+            .order_by("occurrencies")
+            .order_by("id")
+        )
 
         paginator = DefaultPagination()
         page = paginator.paginate_queryset(radicals_qs, request)

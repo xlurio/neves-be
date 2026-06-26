@@ -33,7 +33,7 @@ def seed_radicals(count: int = TEST_RADICAL_COUNT) -> list[Radical]:
 
 
 def seed_session(user, radicals: list[Radical]) -> RadicalSession:
-    session = RadicalSession.objects.create(user=user, num_of_radicals=len(radicals))
+    session = RadicalSession.objects.create(user=user)
     RadicalSessionRadical.objects.bulk_create(
         [
             RadicalSessionRadical(session=session, radical=radical, position=position)

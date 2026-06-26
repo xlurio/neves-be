@@ -32,7 +32,9 @@ class Logogram(models.Model):
 class RadicalLogogramMap(models.Model):
     logogram = models.ForeignKey(Logogram, on_delete=models.CASCADE)
     radical = models.ForeignKey(
-        Radical, on_delete=models.CASCADE, related_name="radical_logograms",
+        Radical,
+        on_delete=models.CASCADE,
+        related_name="radical_logograms",
     )
 
     class Meta:

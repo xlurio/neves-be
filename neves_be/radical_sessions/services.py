@@ -30,7 +30,13 @@ def get_session_radicals(session: RadicalSession) -> list[Radical]:
 
 
 def owned_session_or_404(request: Request, session_id: SessionId) -> RadicalSession:
-    session = RadicalSession.objects.filter(id=session_id, user=request.user).first()
+    session = (
+        RadicalSession.objects.annotate(
+            num_of_radicals=models.Count("session_radicals"),
+        )
+        .filter(id=session_id, user=request.user)
+        .first()
+    )
     if session is None:
         msg = "Radical session not found."
         raise Http404(msg)

@@ -55,7 +55,6 @@ def test_radicals_sessions_lists_existing_sessions(client):
 
     older_session = RadicalSession.objects.create(
         user=user,
-        num_of_radicals=1,
         highest_score=40,
     )
     RadicalSessionRadical.objects.create(
@@ -66,7 +65,6 @@ def test_radicals_sessions_lists_existing_sessions(client):
 
     newer_session = RadicalSession.objects.create(
         user=user,
-        num_of_radicals=1,
         highest_score=95,
     )
     RadicalSessionRadical.objects.create(
@@ -77,7 +75,6 @@ def test_radicals_sessions_lists_existing_sessions(client):
 
     other_session = RadicalSession.objects.create(
         user=other_user,
-        num_of_radicals=1,
         highest_score=70,
     )
     RadicalSessionRadical.objects.create(
@@ -101,12 +98,10 @@ def test_radicals_sessions_lists_existing_sessions(client):
 def test_radical_session_detail_returns_full_session_payload(client):
     user = UserFactory.create()
     client.force_login(user)
-    expected_num_of_radicals = 7
     expected_highest_score = 88
 
     session = RadicalSession.objects.create(
         user=user,
-        num_of_radicals=expected_num_of_radicals,
         highest_score=expected_highest_score,
     )
 
@@ -116,8 +111,6 @@ def test_radical_session_detail_returns_full_session_payload(client):
     payload = response.json()
     assert payload["id"] == str(session.id)
     assert "createdAt" in payload
-    assert payload["numOfRadicals"] == expected_num_of_radicals
     assert payload["highestScore"] == expected_highest_score
     assert "created_at" not in payload
-    assert "num_of_radicals" not in payload
     assert "highest_score" not in payload

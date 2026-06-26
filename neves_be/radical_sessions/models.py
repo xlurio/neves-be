@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import uuid
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
 
 from neves_be.radicals.models import Radical
+
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
 
 
 class RadicalSession(models.Model):
@@ -17,9 +21,8 @@ class RadicalSession(models.Model):
         on_delete=models.SET_NULL,
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    num_of_radicals = models.PositiveIntegerField(default=0)
     highest_score = models.PositiveIntegerField(default=0)
-    session_radicals: models.ManyToManyField[Radical, Radical]
+    session_radicals: RelatedManager[RadicalSessionRadical]
 
     class Meta:
         ordering = ["-created_at"]

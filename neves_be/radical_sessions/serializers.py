@@ -17,6 +17,8 @@ class RadicalSessionSerializer(
     CamelCaseAliasSerializerMixin,
     serializers.ModelSerializer,
 ):
+    num_of_radicals = serializers.IntegerField(read_only=True)
+
     camel_case_aliases = {
         "created_at": "createdAt",
         "num_of_radicals": "numOfRadicals",
