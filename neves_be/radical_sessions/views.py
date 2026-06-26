@@ -102,7 +102,6 @@ def radical_session_radicals_view(request: Request, session_id: SessionId) -> Re
                 occurrencies=models.Sum("radical_logograms__logogram__occurrences"),
             )
             .order_by("occurrencies")
-            .order_by("id")
         )
 
         paginator = DefaultPagination()
