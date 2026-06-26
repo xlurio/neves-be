@@ -10,7 +10,7 @@ from neves_be.radical_sessions.models import RadicalSession
 
 class RadicalSessionTest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session = models.ForeignKey(
+    session: models.ForeignKey[RadicalSession, RadicalSession] = models.ForeignKey(
         RadicalSession,
         on_delete=models.CASCADE,
         related_name="tests",

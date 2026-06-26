@@ -103,6 +103,7 @@ def radical_test_question_view(
             "next": next_url,
             "previous": previous_url,
             "id": str(test.id),
+            "radicalsSessionId": test.session.pk,
             "payload": serialize_question_payload(question, request),
         },
     )
