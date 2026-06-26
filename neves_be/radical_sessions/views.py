@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
 from neves_be.radical_sessions.serializers import RadicalSessionSerializer
+from neves_be.radical_sessions.services import add_radical_to_session
 from neves_be.radical_sessions.services import create_radical_session
 from neves_be.radical_sessions.services import owned_session_or_404
 from neves_be.radicals.models import Radical
@@ -77,17 +78,20 @@ def radical_session_detail_view(request: Request, session_id: SessionId) -> Resp
     )
 
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def radical_session_radicals_view(request: Request, session_id: SessionId) -> Response:
     session = owned_session_or_404(request, session_id)
-    radicals_qs: QuerySet[Radical] = Radical.objects.filter(
-        id__in=session.session_radicals.values("radical_id"),
-    ).order_by("id")
-    if not radicals_qs.exists():
-        radicals_qs = Radical.objects.order_by("id")[: session.num_of_radicals or 20]
 
-    paginator = DefaultPagination()
-    page = paginator.paginate_queryset(radicals_qs, request)
-    serializer = RadicalSerializer(page, many=True, context={"request": request})
-    return paginator.get_paginated_response(serializer.data)
+    if request.method == "GET":
+        radicals_qs: QuerySet[Radical] = Radical.objects.filter(
+            id__in=session.session_radicals.values("radical_id"),
+        ).order_by("id")
+
+        paginator = DefaultPagination()
+        page = paginator.paginate_queryset(radicals_qs, request)
+        serializer = RadicalSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
+
+    new_radical = add_radical_to_session(request, session)
+    return Response(RadicalSerializer(new_radical).data)

@@ -19,6 +19,7 @@ class RadicalSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     num_of_radicals = models.PositiveIntegerField(default=0)
     highest_score = models.PositiveIntegerField(default=0)
+    session_radicals: models.ManyToManyField[Radical, Radical]
 
     class Meta:
         ordering = ["-created_at"]
@@ -33,7 +34,11 @@ class RadicalSessionRadical(models.Model):
         on_delete=models.CASCADE,
         related_name="session_radicals",
     )
-    radical = models.ForeignKey(Radical, on_delete=models.CASCADE)
+    radical = models.ForeignKey(
+        Radical,
+        on_delete=models.CASCADE,
+        related_name="radical_sessions",
+    )
     position = models.PositiveIntegerField(default=0)
 
     class Meta:
