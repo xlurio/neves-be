@@ -13,13 +13,14 @@ from tests.users.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
-RADICAL_IDS = ["人", "口", "土", "木", "火", "水", "金", "山"]
-TEST_RADICAL_COUNT = 6
+RADICAL_IDS = ["人", "口", "土", "木", "火", "水", "金", "山", "田", "心", "手", "日"]
+SESSION_RADICAL_COUNT = 6
+EXPECTED_QUESTION_COUNT = 10
 ANSWER_OPTION_COUNT = 5
 MISSING_QUESTION_NUMBER = 999
 
 
-def seed_radicals(count: int = TEST_RADICAL_COUNT) -> list[Radical]:
+def seed_radicals(count: int = SESSION_RADICAL_COUNT) -> list[Radical]:
     radicals: list[Radical] = []
     for idx in range(count):
         radical = Radical.objects.create(
@@ -46,7 +47,7 @@ def seed_session(user, radicals: list[Radical]) -> RadicalSession:
 def test_create_test_and_question_contract(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-    session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
+    session = seed_session(user, seed_radicals(SESSION_RADICAL_COUNT))
 
     create_response = client.post(f"/api/radicals/sessions/{session.id}/tests")
     assert create_response.status_code == HTTPStatus.CREATED
@@ -56,7 +57,7 @@ def test_create_test_and_question_contract(client: Client):
     assert question_response.status_code == HTTPStatus.OK
 
     payload = question_response.json()
-    assert payload["count"] == TEST_RADICAL_COUNT
+    assert payload["count"] == EXPECTED_QUESTION_COUNT
     assert payload["previous"] is None
     assert payload["next"] is not None
     assert payload["id"] == test_id
@@ -74,7 +75,7 @@ def test_create_test_and_question_contract(client: Client):
 def test_answer_validation_and_question_missed_payload(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-    session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
+    session = seed_session(user, seed_radicals(SESSION_RADICAL_COUNT))
     test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
 
     invalid_answer_response = client.post(
@@ -100,7 +101,7 @@ def test_answer_validation_and_question_missed_payload(client: Client):
 def test_finish_requires_all_answers(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-    session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
+    session = seed_session(user, seed_radicals(SESSION_RADICAL_COUNT))
     test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
 
     response = client.post(f"/api/radicals/test/{test_id}/finish")
@@ -112,11 +113,12 @@ def test_finish_requires_all_answers(client: Client):
 def test_finish_computes_score_and_result_contract(client: Client):
     user = UserFactory.create()
     client.force_login(user)
-    session = seed_session(user, seed_radicals(TEST_RADICAL_COUNT))
+    session = seed_session(user, seed_radicals(SESSION_RADICAL_COUNT))
     test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
 
     first_question = client.get(f"/api/radicals/test/{test_id}/question/1").json()
     count = first_question["count"]
+    assert count == EXPECTED_QUESTION_COUNT
     for number in range(1, count + 1):
         answer_response = client.post(
             f"/api/radicals/test/{test_id}/answer",
@@ -153,7 +155,7 @@ def test_user_cannot_access_other_users_test(client: Client):
 
     owner_client = Client()
     owner_client.force_login(owner)
-    session = seed_session(owner, seed_radicals(TEST_RADICAL_COUNT))
+    session = seed_session(owner, seed_radicals(SESSION_RADICAL_COUNT))
     test_id = owner_client.post(f"/api/radicals/sessions/{session.id}/tests").json()[
         "id"
     ]
@@ -165,3 +167,31 @@ def test_user_cannot_access_other_users_test(client: Client):
     assert payload["code"] == "NOT_FOUND"
     assert "title" in payload
     assert "details" in payload
+
+
+def test_create_test_with_exactly_ten_radicals_has_ten_questions(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    session = seed_session(user, seed_radicals(EXPECTED_QUESTION_COUNT))
+
+    test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
+    first_question = client.get(f"/api/radicals/test/{test_id}/question/1").json()
+
+    assert first_question["count"] == EXPECTED_QUESTION_COUNT
+
+
+def test_create_test_with_more_than_ten_radicals_has_ten_questions(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    session = seed_session(user, seed_radicals(11))
+
+    test_id = client.post(f"/api/radicals/sessions/{session.id}/tests").json()["id"]
+    first_question = client.get(f"/api/radicals/test/{test_id}/question/1").json()
+    last_question = client.get(
+        f"/api/radicals/test/{test_id}/question/{EXPECTED_QUESTION_COUNT}",
+    ).json()
+
+    assert first_question["count"] == EXPECTED_QUESTION_COUNT
+    assert first_question["next"] is not None
+    assert last_question["count"] == EXPECTED_QUESTION_COUNT
+    assert last_question["next"] is None

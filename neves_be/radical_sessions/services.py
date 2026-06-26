@@ -14,19 +14,14 @@ if TYPE_CHECKING:
 
     from neves_be.radical_sessions.types import SessionId
 
-DEFAULT_SESSION_RADICAL_LIMIT = 20
-
 
 def get_session_radicals(session: RadicalSession) -> list[Radical]:
-    linked_radicals = [
+    return [
         session_radical.radical
         for session_radical in session.session_radicals.select_related(
             "radical",
         ).order_by("position")
     ]
-    if linked_radicals:
-        return linked_radicals
-    return list(Radical.objects.order_by("id")[:DEFAULT_SESSION_RADICAL_LIMIT])
 
 
 def owned_session_or_404(request: Request, session_id: SessionId) -> RadicalSession:

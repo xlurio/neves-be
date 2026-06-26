@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 ANSWER_CHOICES: tuple[AnswerChoice, ...] = ("a", "b", "c", "d", "e")
 MINIMUM_TEST_POOL_SIZE = len(ANSWER_CHOICES)
+TEST_QUESTION_COUNT = 10
 QUESTION_TYPES: tuple[QuestionType, ...] = (
     cast("QuestionType", RadicalSessionTestQuestion.Type.AUDIO_TO_LOGOGRAM),
     cast("QuestionType", RadicalSessionTestQuestion.Type.LOGOGRAM_TO_AUDIO),
@@ -125,6 +126,15 @@ def owned_test_or_404(request: Request, test_id: TestId) -> RadicalSessionTest:
     return test
 
 
+def select_test_radicals(
+    session_radicals: list[Radical],
+    rng: random.Random,
+) -> list[Radical]:
+    if len(session_radicals) >= TEST_QUESTION_COUNT:
+        return rng.sample(session_radicals, k=TEST_QUESTION_COUNT)
+    return [rng.choice(session_radicals) for _ in range(TEST_QUESTION_COUNT)]
+
+
 def create_session_test(
     session: RadicalSession,
     request: Request,
@@ -138,8 +148,9 @@ def create_session_test(
     with transaction.atomic():
         test = RadicalSessionTest.objects.create(session=session)
         rng = random.Random(test.id.int)
+        test_radicals = select_test_radicals(session_radicals, rng)
         questions = []
-        for number, radical in enumerate(session_radicals, start=1):
+        for number, radical in enumerate(test_radicals, start=1):
             question_type = QUESTION_TYPES[(number - 1) % len(QUESTION_TYPES)]
             options = pick_option_radicals(radical, pool, rng)
             questions.append(
