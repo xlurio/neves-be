@@ -183,6 +183,15 @@ def radical_test_finish_view(request: Request, test_id: TestId) -> Response:
 @permission_classes([IsAuthenticated])
 def radical_test_result_view(request: Request, test_id: TestId) -> Response:
     test = owned_test_or_404(request, test_id)
+
+    if not test.finished_at:
+        return error_response(
+            "UNFINISHED_TEST",
+            "Test not finished",
+            "This test is yet to be finished and has no result.",
+            http_status=status.HTTP_400_BAD_REQUEST,
+        )
+
     return Response(
         {
             "id": str(test.id),
