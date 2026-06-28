@@ -45,8 +45,6 @@ def stats_me_view(request: Request) -> Response:
     return Response(
         {
             "chineseLogographicSystem": {
-                "radicalsLearned": radicals_learned,
-                "totalRadicals": 100,
                 "progress": progress,
             },
         },
