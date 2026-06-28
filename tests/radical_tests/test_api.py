@@ -5,10 +5,10 @@ from http import HTTPStatus
 import pytest
 from django.test import Client
 
+from neves_be.language_model.models import Radical
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
-from neves_be.radical_tests.models import RadicalSessionTest
-from neves_be.radicals.models import Radical
+from neves_be.radical_assesments.models import RadicalSessionAssesment
 from tests.users.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -130,7 +130,7 @@ def test_finish_computes_score_and_result_contract(client: Client):
     finish_response = client.post(f"/api/radicals/test/{test_id}/finish")
     assert finish_response.status_code == HTTPStatus.OK
 
-    test = RadicalSessionTest.objects.get(id=test_id)
+    test = RadicalSessionAssesment.objects.get(id=test_id)
     assert test.finished_at is not None
     expected_correct = test.questions.filter(
         curr_answer="a",

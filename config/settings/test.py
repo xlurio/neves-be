@@ -18,7 +18,7 @@ SECRET_KEY = env(
     default="reA1CfV2wrlaxRUcEZ18y47iqGr9lzdqdW1yokLYBSpVTXqBIO1QLKNzer32p9HJ",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
-TEST_RUNNER = "django.test.runner.DiscoverRunner"
+ASSESSMENT_RUNNER = "django.test.runner.DiscoverRunner"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------

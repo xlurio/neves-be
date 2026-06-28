@@ -73,10 +73,6 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "rest_framework",
-    "allauth",
-    "allauth.account",
-    "allauth.mfa",
-    "allauth.socialaccount",
     "corsheaders",
 ]
 
@@ -86,11 +82,13 @@ REST_FRAMEWORK = {
 
 LOCAL_APPS = [
     "neves_be.users",
-    "neves_be.radicals.apps.RadicalsConfig",
+    "neves_be.language_model.apps.LanguageModelConfig",
+    "neves_be.practice_sessions.apps.PracticeSessionsConfig",
     "neves_be.radical_sessions.apps.RadicalSessionsConfig",
-    "neves_be.radical_tests.apps.RadicalTestsConfig",
-    # Your stuff: custom apps go here
+    "neves_be.sentence_sessions.apps.SentenceSessionsConfig",
+    "neves_be.radical_assessments.apps.RadicalAssessmentsConfig",
 ]
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 

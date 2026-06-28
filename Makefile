@@ -1,6 +1,9 @@
 dockercompose=docker compose -f docker-compose.local.yml
 dockercomposeup=$(dockercompose) up -d
 
+build:
+	$(dockercompose) build
+
 down:
 	$(dockercompose) down -v
 

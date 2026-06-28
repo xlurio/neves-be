@@ -5,50 +5,23 @@ from typing import TYPE_CHECKING
 from django.db import models
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from neves_be.language_model.models import Radical
+from neves_be.language_model.serializers import RadicalSerializer
+from neves_be.practice_sessions.views import DefaultPagination
 from neves_be.radical_sessions.models import RadicalSession
-from neves_be.radical_sessions.models import RadicalSessionRadical
 from neves_be.radical_sessions.serializers import RadicalSessionSerializer
 from neves_be.radical_sessions.services import add_radical_to_session
 from neves_be.radical_sessions.services import create_radical_session
-from neves_be.radical_sessions.services import owned_session_or_404
-from neves_be.radicals.models import Radical
-from neves_be.radicals.serializers import RadicalSerializer
+from neves_be.radical_sessions.services import owned_radical_session_or_404
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
     from rest_framework.request import Request
 
     from neves_be.radical_sessions.types import SessionId
-
-
-class DefaultPagination(PageNumberPagination):
-    page_size = 10
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def stats_me_view(request: Request) -> Response:
-    radicals_learned = (
-        RadicalSessionRadical.objects.filter(
-            session__user=request.user,
-            session__highest_score__gte=70,
-        )
-        .values("radical_id")
-        .distinct()
-        .count()
-    )
-    progress = round((radicals_learned / 100) * 100, 2)
-    return Response(
-        {
-            "chineseLogographicSystem": {
-                "progress": progress,
-            },
-        },
-    )
 
 
 @api_view(["GET", "POST"])
@@ -79,14 +52,16 @@ def radical_sessions_view(request: Request) -> Response:
 @permission_classes([IsAuthenticated])
 def radical_session_detail_view(request: Request, session_id: SessionId) -> Response:
     return Response(
-        RadicalSessionSerializer(owned_session_or_404(request, session_id)).data,
+        RadicalSessionSerializer(
+            owned_radical_session_or_404(request, session_id),
+        ).data,
     )
 
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def radical_session_radicals_view(request: Request, session_id: SessionId) -> Response:
-    session = owned_session_or_404(request, session_id)
+    session = owned_radical_session_or_404(request, session_id)
 
     if request.method == "GET":
         radicals_qs: QuerySet[Radical] = (
@@ -96,7 +71,7 @@ def radical_session_radicals_view(request: Request, session_id: SessionId) -> Re
             .annotate(
                 occurrencies=models.Sum("radical_logograms__logogram__occurrences"),
             )
-            .order_by("occurrencies")
+            .order_by("-occurrencies")
         )
 
         paginator = DefaultPagination()

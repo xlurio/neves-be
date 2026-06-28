@@ -25,6 +25,7 @@ type ErrorCode = Literal[
     "INVALID_QUESTION",
     "INVALID_ANSWER",
     "QUESTION_MISSED",
+    "UNFINISHED_ASSESSMENT",
 ]
 
 

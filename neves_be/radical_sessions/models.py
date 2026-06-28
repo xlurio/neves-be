@@ -1,34 +1,21 @@
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING
 
-from django.conf import settings
 from django.db import models
 
-from neves_be.radicals.models import Radical
+from neves_be.language_model.models import Radical
+from neves_be.practice_sessions.models import PracticeSession
 
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
-
-class RadicalSession(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    highest_score = models.PositiveIntegerField(default=0)
-    session_radicals: RelatedManager[RadicalSessionRadical]
-
     class Meta:
         ordering = ["-created_at"]
 
-    def __str__(self) -> str:
-        return str(self.id)
+
+class RadicalSession(PracticeSession):
+    session_radicals: RelatedManager[RadicalSessionRadical]
 
 
 class RadicalSessionRadical(models.Model):
@@ -53,7 +40,7 @@ class RadicalSessionRadical(models.Model):
             ),
             models.UniqueConstraint(
                 fields=["session", "position"],
-                name="uniq_session_position",
+                name="uniq_radical_session_position",
             ),
         ]
 
