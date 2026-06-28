@@ -35,7 +35,7 @@ def stats_me_view(request: Request) -> Response:
     radicals_learned = (
         RadicalSessionRadical.objects.filter(
             session__user=request.user,
-            session__highest_score__gte=7,
+            session__highest_score__gte=70,
         )
         .values("radical_id")
         .distinct()
