@@ -17,26 +17,13 @@ from neves_be.sentence_sessions.models import SentenceSessionSentence
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
-    from neves_be.radical_sessions.types import SentencesStatistics
-    from neves_be.radical_sessions.types import SessionId
-
-
-def get_session_sentences(session: RadicalSession) -> list[Sentence]:
-    return [
-        session_sentence.sentence
-        for session_sentence in SentenceSessionSentence.objects.filter(
-            session__user=session.user,
-        )
-        .select_related(
-            "sentence",
-        )
-        .order_by("position")
-    ]
+    from neves_be.sentence_sessions.types import SentenceSessionId
+    from neves_be.sentence_sessions.types import SentencesStatistics
 
 
 def owned_sentence_session_or_404(
     request: Request,
-    session_id: SessionId,
+    session_id: SentenceSessionId,
 ) -> SentenceSession:
     session = (
         SentenceSession.objects.annotate(
@@ -75,8 +62,6 @@ def annotate_likelihood_to_sentence_qs(
 
 
 def create_sentence_session(request: Request) -> SentenceSession:
-    new_session = SentenceSession.objects.create(user=request.user)
-
     sentence_session_sentence_sqs = SentenceSessionSentence.objects.filter(
         sentence__cluster_id=models.OuterRef("cluster_id"),
         session__user=request.user,
@@ -110,12 +95,16 @@ def create_sentence_session(request: Request) -> SentenceSession:
 
     session_sentences_to_create = []
 
+    new_session = SentenceSession.objects.create(
+        user=request.user,
+        sentence_cluster=cluster,
+    )
+
     for sentence_idx, sentence in enumerate(most_likely_sequences_in_cluster_qs):
         session_sentences_to_create.append(
             SentenceSessionSentence(
                 session=new_session,
                 sentence=sentence,
-                sentence_cluster=cluster,
                 position=sentence_idx,
             ),
         )

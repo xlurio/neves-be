@@ -11,8 +11,8 @@ from neves_be.language_model.models import RadicalLogogramMap
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
 from neves_be.language_model.models import WordSentenceMap
-from neves_be.radical_assesments.models import RadicalSessionAssessment
-from neves_be.radical_assesments.models import RadicalSessionAssessmentQuestion
+from neves_be.radical_assessments.models import RadicalSessionAssessment
+from neves_be.radical_assessments.models import RadicalSessionAssessmentQuestion
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
 

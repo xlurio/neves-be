@@ -19,7 +19,6 @@ from neves_be.common.api import load_request_data
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
-
 UserModel = get_user_model()
 
 

@@ -4,13 +4,8 @@ from typing import NewType
 from typing import TypedDict
 from uuid import UUID
 
-SessionId = NewType("SessionId", UUID)
+RadicalSessionId = NewType("RadicalSessionId", UUID)
 
 
 class RadicalsStatistics(TypedDict):
-    progress: float
-
-
-class SentencesStatistics(TypedDict):
-    is_unlocked: bool
     progress: float

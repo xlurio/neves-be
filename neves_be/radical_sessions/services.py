@@ -15,26 +15,13 @@ from neves_be.radical_sessions.models import RadicalSessionRadical
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
+    from neves_be.radical_sessions.types import RadicalSessionId
     from neves_be.radical_sessions.types import RadicalsStatistics
-    from neves_be.radical_sessions.types import SessionId
-
-
-def get_session_radicals(session: RadicalSession) -> list[Radical]:
-    return [
-        session_radical.radical
-        for session_radical in RadicalSessionRadical.objects.filter(
-            session__user=session.user,
-        )
-        .select_related(
-            "radical",
-        )
-        .order_by("position")
-    ]
 
 
 def owned_radical_session_or_404(
     request: Request,
-    session_id: SessionId,
+    session_id: RadicalSessionId,
 ) -> RadicalSession:
     session = (
         RadicalSession.objects.annotate(

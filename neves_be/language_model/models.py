@@ -7,7 +7,9 @@ from django.db import models
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
+    from neves_be.language_model.types import LogogramId
     from neves_be.language_model.types import SentenceClusterId
+    from neves_be.language_model.types import SentenceId
     from neves_be.radical_sessions.models import RadicalSessionRadical
     from neves_be.sentence_sessions.models import SentenceSessionSentence
 
@@ -46,6 +48,7 @@ class RadicalLogogramMap(models.Model):
         on_delete=models.CASCADE,
         related_name="logogram_radicals",
     )
+    logogram_id: LogogramId
     radical = models.ForeignKey(
         Radical,
         on_delete=models.CASCADE,
@@ -67,6 +70,7 @@ class RadicalLogogramMap(models.Model):
 class Word(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.TextField(blank=True, default="")
+    pronounce = models.FileField()
     pos_tag = models.CharField(max_length=255, blank=True, default="")
     occurrences = models.PositiveIntegerField(default=0)
     word_logograms: RelatedManager[LogogramWordMap]
@@ -112,8 +116,8 @@ class SentenceCluster(models.Model):
 
 
 class Sentence(models.Model):
-    id = models.IntegerField(primary_key=True)
-    value = models.TextField(blank=True, default="")
+    id: models.IntegerField[int, SentenceId] = models.IntegerField(primary_key=True)
+    value: models.TextField[str, str] = models.TextField()
     cluster: models.ForeignKey[SentenceCluster, SentenceCluster | None] = (
         models.ForeignKey(
             SentenceCluster,
@@ -140,7 +144,8 @@ class WordSentenceMap(models.Model):
         on_delete=models.CASCADE,
         related_name="sentence_words",
     )
-    word = models.ForeignKey(
+    sentence_id: SentenceId
+    word: models.ForeignKey[Word, Word] = models.ForeignKey(
         Word,
         on_delete=models.CASCADE,
         related_name="word_sentences",

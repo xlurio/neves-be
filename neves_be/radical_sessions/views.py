@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
     from rest_framework.request import Request
 
-    from neves_be.radical_sessions.types import SessionId
+    from neves_be.radical_sessions.types import RadicalSessionId
 
 
 @api_view(["GET", "POST"])
@@ -50,7 +50,10 @@ def radical_sessions_view(request: Request) -> Response:
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def radical_session_detail_view(request: Request, session_id: SessionId) -> Response:
+def radical_session_detail_view(
+    request: Request,
+    session_id: RadicalSessionId,
+) -> Response:
     return Response(
         RadicalSessionSerializer(
             owned_radical_session_or_404(request, session_id),
@@ -60,7 +63,10 @@ def radical_session_detail_view(request: Request, session_id: SessionId) -> Resp
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def radical_session_radicals_view(request: Request, session_id: SessionId) -> Response:
+def radical_session_radicals_view(
+    request: Request,
+    session_id: RadicalSessionId,
+) -> Response:
     session = owned_radical_session_or_404(request, session_id)
 
     if request.method == "GET":

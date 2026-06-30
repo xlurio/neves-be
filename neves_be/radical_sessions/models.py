@@ -6,9 +6,14 @@ from django.db import models
 
 from neves_be.language_model.models import Radical
 from neves_be.practice_sessions.models import PracticeSession
+from neves_be.practice_sessions.models import PracticeSessionItem
+from neves_be.practice_sessions.models import PracticeSessionItemMeta
+from neves_be.practice_sessions.models import PracticeSessionMeta
 
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
+
+    from neves_be.radical_assessments.models import RadicalSessionAssessment
 
     class Meta:
         ordering = ["-created_at"]
@@ -16,9 +21,12 @@ if TYPE_CHECKING:
 
 class RadicalSession(PracticeSession):
     session_radicals: RelatedManager[RadicalSessionRadical]
+    assessments: RelatedManager[RadicalSessionAssessment]
+
+    class Meta(PracticeSessionMeta): ...
 
 
-class RadicalSessionRadical(models.Model):
+class RadicalSessionRadical(PracticeSessionItem):
     session = models.ForeignKey(
         RadicalSession,
         on_delete=models.CASCADE,
@@ -29,10 +37,8 @@ class RadicalSessionRadical(models.Model):
         on_delete=models.CASCADE,
         related_name="radical_sessions",
     )
-    position = models.PositiveIntegerField(default=0)
 
-    class Meta:
-        ordering = ["session", "position"]
+    class Meta(PracticeSessionItemMeta):
         constraints = [
             models.UniqueConstraint(
                 fields=["session", "radical"],

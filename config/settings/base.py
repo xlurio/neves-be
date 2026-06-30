@@ -86,7 +86,8 @@ LOCAL_APPS = [
     "neves_be.practice_sessions.apps.PracticeSessionsConfig",
     "neves_be.radical_sessions.apps.RadicalSessionsConfig",
     "neves_be.sentence_sessions.apps.SentenceSessionsConfig",
-    "neves_be.radical_assessments.apps.RadicalAssessmentsConfig",
+    "neves_be.sentence_session_sentences.apps.SentenceSessionSentencesConfig",
+    "neves_be.practice_assessments.apps.PracticeAssessmentsConfig",
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

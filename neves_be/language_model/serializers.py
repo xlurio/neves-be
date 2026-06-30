@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
 from rest_framework import serializers
 
 from neves_be.common.serializers import CamelCaseAliasSerializerMixin
+from neves_be.language_model.models import Logogram
 from neves_be.language_model.models import Radical
 from neves_be.language_model.models import Sentence
+from neves_be.language_model.models import Word
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -45,8 +48,6 @@ class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializ
 
 
 class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
-    pronounce = serializers.SerializerMethodField()
-
     class Meta:
         model = Sentence
         fields = ["id", "value"]
@@ -54,3 +55,26 @@ class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSeriali
     def get_fields(self) -> MutableMapping[str, Field]:
         fields = super().get_fields()
         return self._rename_camel_case_fields(fields)
+
+
+class WordSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Word
+        fields = ["id", "value"]
+
+
+class LogogramSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Logogram
+        fields = ["id", "pinyin", "meaning"]
+
+    def get_fields(self) -> MutableMapping[str, Field]:
+        fields = super().get_fields()
+
+        return self._rename_camel_case_fields(fields)
+
+    def get_radicals(self, instance: Logogram) -> list[dict[str, Any]]:
+        radical_ids = instance.logogram_radicals.values_list("logogram_id", flat=True)
+        radical_qs = Radical.objects.filter(pk__in=radical_ids)
+
+        return RadicalSerializer(radical_qs, many=True)
