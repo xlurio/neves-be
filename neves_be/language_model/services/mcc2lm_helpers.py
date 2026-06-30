@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
-from typing import TypedDict
 from typing import overload
 
 from neves_be.language_model.models import Logogram
@@ -12,6 +10,7 @@ from neves_be.language_model.models import RadicalLogogramMap
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
 from neves_be.language_model.models import WordSentenceMap
+from neves_be.language_model.services.audio_cmn import get_audio_path_from_pinyin
 from neves_be.practice_assessments.models import RadicalSessionAssessment
 from neves_be.practice_questions.models import RadicalSessionAssessmentQuestion
 from neves_be.radical_sessions.models import RadicalSession
@@ -19,37 +18,6 @@ from neves_be.radical_sessions.models import RadicalSessionRadical
 
 if TYPE_CHECKING:
     import sqlite3
-    from collections.abc import Sequence
-    from pathlib import Path
-
-ACCENTED_PINYIN_REPLACEMENTS = {
-    "ā": "a",
-    "á": "a",
-    "ǎ": "a",
-    "à": "a",
-    "ē": "e",
-    "é": "e",
-    "ě": "e",
-    "è": "e",
-    "ī": "i",
-    "í": "i",
-    "ǐ": "i",
-    "ì": "i",
-    "ō": "o",
-    "ó": "o",
-    "ǒ": "o",
-    "ò": "o",
-    "ū": "u",
-    "ú": "u",
-    "ǔ": "u",
-    "ù": "u",
-    "ǖ": "v",
-    "ǘ": "v",
-    "ǚ": "v",
-    "ǜ": "v",
-    "ü": "v",
-}
-PINYIN_TOKEN_RE = re.compile(r"[a-zA-ZüÜǖǘǚǜāáǎàēéěèīíǐìōóǒòūúǔùv:]+")
 
 
 @overload
@@ -68,16 +36,6 @@ def row_value(row: sqlite3.Row, key: str, default: object = "") -> object:
     return value if value is not None else default
 
 
-def normalize_pinyin_for_filename(pinyin: str) -> str:
-    token_match = PINYIN_TOKEN_RE.search((pinyin or "").strip())
-    if token_match is None:
-        return ""
-
-    token = token_match.group(0).lower().replace("u:", "v")
-    normalized = "".join(ACCENTED_PINYIN_REPLACEMENTS.get(char, char) for char in token)
-    return re.sub(r"[^a-zv]", "", normalized)
-
-
 def reset_radical_learning_tables() -> None:
     RadicalSessionAssessmentQuestion.objects.all().delete()
     RadicalSessionAssessment.objects.all().delete()
@@ -92,38 +50,22 @@ def reset_radical_learning_tables() -> None:
     Radical.objects.all().delete()
 
 
-class RadicalModelSetup(TypedDict):
-    radical_models: Sequence[Radical]
-    missing_audio_count: int
+def import_radicals(
+    cursor: sqlite3.Cursor,
+    batch_size: int,
+) -> None:
+    radicals_query = "SELECT * FROM MCC2LM_RADICAL"
+    radicals_rows = cursor.execute(radicals_query).fetchall()
 
-
-def build_radical_models(
-    radicals_rows: list[sqlite3.Row],
-    audio_dir: Path,
-) -> RadicalModelSetup:
-    radical_models: list[Radical] = []
-    missing_audio_count = 0
-    for row in radicals_rows:
-        radical_id = str(row_value(row, "ID"))
-        pinyin = str(row_value(row, "PINYIN"))
-        normalized = normalize_pinyin_for_filename(pinyin)
-        pronounce = ""
-        if normalized and audio_dir.exists():
-            matches = sorted(audio_dir.glob(f"cmn-{normalized}[0-9].mp3"))
-            if matches:
-                pronounce = f"/audio-cmn/18k-abr/syllabs/{matches[0].name}"
-        if not pronounce:
-            missing_audio_count += 1
-        radical_models.append(
+    Radical.objects.bulk_create(
+        [
             Radical(
-                id=radical_id,
-                pinyin=pinyin,
+                id=str(row_value(row, "ID")),
+                pinyin=str(row_value(row, "PINYIN")),
                 meaning=str(row_value(row, "MEANING")),
-                pronounce=pronounce,
-            ),
-        )
-
-    return RadicalModelSetup(
-        radical_models=radical_models,
-        missing_audio_count=missing_audio_count,
+                pronounce=get_audio_path_from_pinyin(str(row_value(row, "PINYIN"))),
+            )
+            for row in radicals_rows
+        ],
+        batch_size=batch_size,
     )

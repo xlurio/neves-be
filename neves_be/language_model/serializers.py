@@ -58,15 +58,30 @@ class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSeriali
 
 
 class WordSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    pronounce = serializers.SerializerMethodField()
+
     class Meta:
         model = Word
-        fields = ["id", "value"]
+        fields = ["id", "value", "pronounce"]
+
+    def get_pronounce(self, instance: Word) -> str:
+        if not instance.pronounce:
+            return ""
+        if instance.pronounce.startswith(("http://", "https://")):
+            return instance.pronounce
+
+        typed_request = cast("Request | None", self.context.get("request"))
+        if typed_request is not None and instance.pronounce.startswith("/"):
+            return typed_request.build_absolute_uri(instance.pronounce)
+        return instance.pronounce
 
 
 class LogogramSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    pronounce = serializers.SerializerMethodField()
+
     class Meta:
         model = Logogram
-        fields = ["id", "pinyin", "meaning"]
+        fields = ["id", "pinyin", "meaning", "pronounce"]
 
     def get_fields(self) -> MutableMapping[str, Field]:
         fields = super().get_fields()
@@ -78,3 +93,14 @@ class LogogramSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSeriali
         radical_qs = Radical.objects.filter(pk__in=radical_ids)
 
         return RadicalSerializer(radical_qs, many=True)
+
+    def get_pronounce(self, instance: Word) -> str:
+        if not instance.pronounce:
+            return ""
+        if instance.pronounce.startswith(("http://", "https://")):
+            return instance.pronounce
+
+        typed_request = cast("Request | None", self.context.get("request"))
+        if typed_request is not None and instance.pronounce.startswith("/"):
+            return typed_request.build_absolute_uri(instance.pronounce)
+        return instance.pronounce

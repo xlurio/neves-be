@@ -8,6 +8,8 @@ from neves_be.language_model.models import RadicalLogogramMap
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
 from neves_be.language_model.models import WordSentenceMap
+from neves_be.language_model.services.audio_cmn import get_audio_path_from_chinese
+from neves_be.language_model.services.audio_cmn import get_audio_path_from_pinyin
 from neves_be.language_model.services.mcc2lm_helpers import row_value
 
 if TYPE_CHECKING:
@@ -17,18 +19,21 @@ if TYPE_CHECKING:
 
 def import_logograms(cursor: sqlite3.Cursor, batch_size: int) -> None:
     logogram_rows = cursor.execute("SELECT * FROM MCC2LM_LOGOGRAM").fetchall()
-    Logogram.objects.bulk_create(
-        [
+
+    logogram_models: list[Logogram] = []
+    for row in logogram_rows:
+        pinyin = str(row_value(row, "PINYIN"))
+        logogram_models.append(
             Logogram(
                 id=str(row_value(row, "ID")),
                 occurrences=int(row_value(row, "OCCURRENCIES", 0) or 0),
-                pinyin=str(row_value(row, "PINYIN")),
+                pinyin=pinyin,
                 meaning=str(row_value(row, "MEANING")),
-            )
-            for row in logogram_rows
-        ],
-        batch_size=batch_size,
-    )
+                pronounce=get_audio_path_from_pinyin(pinyin),
+            ),
+        )
+
+    Logogram.objects.bulk_create(logogram_models, batch_size=batch_size)
 
 
 def import_radical_logogram_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:
@@ -55,28 +60,16 @@ def import_words(
 ) -> int:
     word_rows = cursor.execute("SELECT * FROM MCC2LM_WORD").fetchall()
     word_models: list[Word] = []
-    missing_audio_count = 0
 
     for row in word_rows:
         word_str = str(row_value(row, "VALUE"))
-        pronounce = ""
-        if word_str and audio_dir.exists():
-            matches = sorted(audio_dir.glob(f"cmn-{word_str}[0-9].mp3"))
-
-            if matches:
-                pronounce = f"/audio-cmn/18k-abr/hsk/{matches[0].name}"
-
-        if not pronounce:
-            missing_audio_count += 1
-
-        pronounce = None
         word_models.append(
             Word(
                 id=int(row_value(row, "ID", 0) or 0),
-                value=str(row_value(row, "VALUE")),
+                value=word_str,
                 pos_tag=str(row_value(row, "POS_TAG")),
                 occurrences=int(row_value(row, "OCCURRENCIES", 0) or 0),
-                pronounce=pronounce,
+                pronounce=get_audio_path_from_chinese(word_str),
             ),
         )
 
@@ -84,8 +77,6 @@ def import_words(
         word_models,
         batch_size=batch_size,
     )
-
-    return missing_audio_count
 
 
 def import_logogram_word_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:

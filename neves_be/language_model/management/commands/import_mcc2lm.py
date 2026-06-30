@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import TypedDict
 from typing import Unpack
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
@@ -15,7 +14,7 @@ from neves_be.language_model.models import Logogram
 from neves_be.language_model.models import Radical
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
-from neves_be.language_model.services.mcc2lm_helpers import build_radical_models
+from neves_be.language_model.services.mcc2lm_helpers import import_radicals
 from neves_be.language_model.services.mcc2lm_helpers import (
     reset_radical_learning_tables,
 )
@@ -44,17 +43,10 @@ class Command(BaseCommand):
 
         sqlite_path = Path(options["sqlite_path"]).expanduser().resolve()
         batch_size = int(options["batch_size"])
-        word_miss_audio_count = 0
 
         if not sqlite_path.exists():
             msg = f"SQLite file not found: {sqlite_path}"
             raise CommandError(msg)
-
-        audio_dir = Path(settings.BASE_DIR) / "audio-cmn" / "18k-abr"
-        if not audio_dir.exists():
-            self.stdout.write(
-                self.style.WARNING(f"Audio directory not found: {audio_dir}"),
-            )
 
         with sqlite3.connect(sqlite_path) as source_db:
             source_db.row_factory = sqlite3.Row
@@ -63,42 +55,19 @@ class Command(BaseCommand):
             with transaction.atomic():
                 reset_radical_learning_tables()
 
-                radicals_query = "SELECT * FROM MCC2LM_RADICAL"
-                radicals_rows = cursor.execute(radicals_query).fetchall()
-                radical_stp = build_radical_models(
-                    radicals_rows,
-                    audio_dir / "syllabs",
-                )
-                Radical.objects.bulk_create(
-                    radical_stp["radical_models"],
-                    batch_size=batch_size,
-                )
+                import_radicals(cursor, batch_size)
                 import_logograms(cursor, batch_size)
                 import_radical_logogram_maps(cursor, batch_size)
-                word_miss_audio_count = import_words(
-                    cursor,
-                    batch_size,
-                    audio_dir / "hsk",
-                )
+                import_words(cursor, batch_size)
                 import_logogram_word_maps(cursor, batch_size)
                 import_sentences(cursor, batch_size)
                 import_word_sentence_maps(cursor, batch_size)
 
-        self.__stdout_result(radical_stp["missing_audio_count"], word_miss_audio_count)
+        self.__stdout_result()
 
-    def __stdout_result(
-        self,
-        radical_miss_audio_count: int,
-        word_miss_audio_count: int,
-    ) -> None:
+    def __stdout_result(self) -> None:
         self.stdout.write(self.style.SUCCESS("MCC2LM import finished successfully."))
         self.stdout.write(f"Radicals imported: {Radical.objects.count()}")
         self.stdout.write(f"Logograms imported: {Logogram.objects.count()}")
         self.stdout.write(f"Words imported: {Word.objects.count()}")
         self.stdout.write(f"Sentences imported: {Sentence.objects.count()}")
-        self.stdout.write(
-            f"Radicals without matching audio: {radical_miss_audio_count}",
-        )
-        self.stdout.write(
-            f"Words without matching audio: {word_miss_audio_count}",
-        )
