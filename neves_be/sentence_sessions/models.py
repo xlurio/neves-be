@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
     from neves_be.language_model.types import SentenceId
-    from neves_be.sentence_assessments.models import SentenceSessionAssessment
+    from neves_be.practice_assessments.models import SentenceSessionAssessment
     from neves_be.sentence_sessions.types import SentenceSessionId
 
 
@@ -31,7 +31,13 @@ class SentenceSession(PracticeSession):
     session_sentences: RelatedManager[SentenceSessionSentence]
     assessments: RelatedManager[SentenceSessionAssessment]
 
-    class Meta(PracticeSessionMeta): ...
+    class Meta(PracticeSessionMeta):
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "sentence_cluster"],
+                name="uniq_user_sentence_cluster",
+            ),
+        ]
 
 
 class SentenceSessionSentence(PracticeSessionItem):
@@ -53,10 +59,6 @@ class SentenceSessionSentence(PracticeSessionItem):
             models.UniqueConstraint(
                 fields=["session", "sentence"],
                 name="uniq_session_sentence",
-            ),
-            models.UniqueConstraint(
-                fields=["session", "sentence_cluster"],
-                name="uniq_session_sentence_cluster",
             ),
             models.UniqueConstraint(
                 fields=["session", "position"],

@@ -30,3 +30,23 @@ class PracticeSessionSerializer(
         fields = super().get_fields()
 
         return self._rename_camel_case_fields(fields)
+
+
+class RadicalSessionSerializer(PracticeSessionSerializer):
+    num_of_radicals = serializers.IntegerField(read_only=True)
+
+    camel_case_aliases = {
+        "created_at": "createdAt",
+        "num_of_radicals": "numOfRadicals",
+        "highest_score": "highestScore",
+    }
+
+
+class SentenceSessionSerializer(PracticeSessionSerializer):
+    num_of_sentences = serializers.IntegerField(read_only=True)
+
+    camel_case_aliases = {
+        "created_at": "createdAt",
+        "num_of_sentences": "numOfSentences",
+        "highest_score": "highestScore",
+    }

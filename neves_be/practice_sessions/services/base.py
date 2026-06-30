@@ -1,5 +1,5 @@
+import abc
 from typing import TYPE_CHECKING
-from typing import assert_never
 
 from django.db import models
 from django.http import Http404
@@ -8,9 +8,10 @@ from neves_be.radical_sessions.models import RadicalSession
 from neves_be.sentence_sessions.models import SentenceSession
 
 if TYPE_CHECKING:
+    from rest_framework.request import Request
+
     from neves_be.practice_sessions.types import ConcretePracticeSession
     from neves_be.practice_sessions.types import ConcretePracticeSessionId
-    from neves_be.practice_sessions.types import SessionType
     from neves_be.users.models import User
 
 
@@ -22,17 +23,17 @@ class BasePracticeSessionAccessor:
     def __init__(self, user: User) -> None:
         self.__user = user
 
+    def get_sessions(self) -> models.QuerySet[ConcretePracticeSession]:
+        return self.SESSION_TYPE.objects.annotate(
+            total_items=models.Count(self.ITEMS_RELATED_NAME),
+        ).filter(user=self.__user)
+
     def get_session(
         self,
         session_id: ConcretePracticeSessionId,
     ) -> ConcretePracticeSession:
-        session = (
-            self.SESSION_TYPE.objects.annotate(
-                total_items=models.Count(self.ITEMS_RELATED_NAME),
-            )
-            .filter(id=session_id, user=self.__user)
-            .first()
-        )
+        session = self.get_sessions().filter(id=session_id).first()
+
         if session is None:
             raise Http404(self.NOT_FOUND_MSG)
         return session
@@ -50,14 +51,13 @@ class SentenceSessionAccessor(BasePracticeSessionAccessor):
     ITEMS_RELATED_NAME = "session_radicals"
 
 
-def make_session_getter(
-    user: User,
-    session_type: SessionType,
-) -> BasePracticeSessionAccessor:
-    if session_type == "radicals":
-        return RadicalSessionAccessor(user)
+class BaseSessionFactory(abc.ABC):
+    def __init__(self, user: User) -> None:
+        self.__user = user
 
-    if session_type == "sentences":
-        return SentenceSessionAccessor(user)
+    @abc.abstractmethod
+    def make_assessment(self) -> ConcretePracticeSession: ...
 
-    assert_never(session_type)
+    @property
+    def user(self) -> Request:
+        return self.__user

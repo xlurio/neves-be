@@ -2,17 +2,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.db import models
+from django.urls import reverse
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from neves_be.practice_sessions.views import DefaultPagination
-from neves_be.sentence_sessions.models import SentenceSession
-from neves_be.sentence_sessions.serializers import SentenceSessionSerializer
-from neves_be.sentence_sessions.services import create_sentence_session
-from neves_be.sentence_sessions.services import owned_sentence_session_or_404
+from neves_be.language_model.serializers import LogogramSerializer
+from neves_be.language_model.serializers import SentenceSerializer
+from neves_be.language_model.serializers import WordSerializer
+from neves_be.practice_sessions.services.utils import make_session_getter
+from neves_be.sentence_sessions.services import owned_sentence_session_sentence_or_404
+from neves_be.sentence_sessions.services import (
+    owned_sentence_session_sentence_word_or_404,
+)
+from neves_be.sentence_sessions.services import (
+    owned_sentence_session_word_logogram_or_404,
+)
 
 if TYPE_CHECKING:
     from rest_framework.request import Request
@@ -20,38 +26,162 @@ if TYPE_CHECKING:
     from neves_be.sentence_sessions.types import SentenceSessionId
 
 
-@api_view(["GET", "POST"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def sentence_sessions_view(request: Request) -> Response:
-    if request.method == "GET":
-        queryset = (
-            SentenceSession.objects.filter(user=request.user)
-            .annotate(
-                num_of_sentences=models.Count("session_sentences"),
-            )
-            .order_by(
-                "-created_at",
-            )
-        )
-        paginator = DefaultPagination()
-        page = paginator.paginate_queryset(queryset, request)
+def sentence_session_sentences_view(
+    request: Request,
+    session_id: SentenceSessionId,
+    sentence_num: int,
+) -> Response:
+    getter = make_session_getter(request.user, "sentences")
+    session = getter.get_session(session_id)
+    total_sentences = session.session_sentences.count()
+    sentence = owned_sentence_session_sentence_or_404(session, sentence_num)
 
-        return paginator.get_paginated_response(
-            SentenceSessionSerializer(page, many=True).data,
+    next_url = (
+        request.build_absolute_uri(
+            reverse(
+                "api-sentence-session-sentence",
+                kwargs={
+                    "session_id": str(session.pk),
+                    "sentence_num": sentence_num + 1,
+                },
+            ),
         )
-
-    new_sentence_session = create_sentence_session(request)
-    return Response(SentenceSessionSerializer(new_sentence_session).data)
+        if sentence_num < total_sentences
+        else None
+    )
+    previous_url = (
+        request.build_absolute_uri(
+            reverse(
+                "api-sentence-session-sentence",
+                kwargs={
+                    "session_id": str(session.pk),
+                    "sentence_num": sentence_num - 1,
+                },
+            ),
+        )
+        if sentence_num > 1
+        else None
+    )
+    return Response(
+        {
+            "count": total_sentences,
+            "next": next_url,
+            "previous": previous_url,
+            "payload": SentenceSerializer(sentence).data,
+        },
+    )
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def sentence_session_detail_view(
+def sentence_session_sentence_words_view(
     request: Request,
     session_id: SentenceSessionId,
+    sentence_num: int,
+    word_num: int,
 ) -> Response:
+    getter = make_session_getter(request.user, "sentences")
+    session = getter.get_session(session_id)
+    sentence = owned_sentence_session_sentence_or_404(session, sentence_num)
+    total_words = sentence.sentence_words.count()
+    word = owned_sentence_session_sentence_word_or_404(sentence, word_num, total_words)
+
+    next_url = (
+        request.build_absolute_uri(
+            reverse(
+                "api-sentence-session-sentence-word",
+                kwargs={
+                    "session_id": str(sentence.pk),
+                    "sentence_num": sentence_num,
+                    "word_num": word_num + 1,
+                },
+            ),
+        )
+        if word_num < total_words
+        else None
+    )
+    previous_url = (
+        request.build_absolute_uri(
+            reverse(
+                "api-sentence-session-sentence-word",
+                kwargs={
+                    "session_id": str(sentence.pk),
+                    "sentence_num": sentence_num,
+                    "word_num": word_num - 1,
+                },
+            ),
+        )
+        if word_num > 1
+        else None
+    )
     return Response(
-        SentenceSessionSerializer(
-            owned_sentence_session_or_404(request, session_id),
-        ).data,
+        {
+            "count": total_words,
+            "next": next_url,
+            "previous": previous_url,
+            "payload": WordSerializer(word).data,
+        },
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def sentence_session_word_logogram_view(
+    request: Request,
+    session_id: SentenceSessionId,
+    sentence_num: int,
+    word_num: int,
+    logogram_num: int,
+) -> Response:
+    getter = make_session_getter(request.user, "sentences")
+    session = getter.get_session(session_id)
+    sentence = owned_sentence_session_sentence_or_404(session, sentence_num)
+    total_words = sentence.sentence_words.count()
+    word = owned_sentence_session_sentence_word_or_404(sentence, word_num, total_words)
+    total_logograms = word.word_logograms.count()
+    logogram = owned_sentence_session_word_logogram_or_404(
+        word,
+        logogram_num,
+        total_logograms,
+    )
+
+    next_url = (
+        request.build_absolute_uri(
+            reverse(
+                "api-sentence-session-word-logogram",
+                kwargs={
+                    "session_id": str(sentence.pk),
+                    "sentence_num": sentence_num,
+                    "word_num": word_num,
+                    "logogram_num": logogram_num + 1,
+                },
+            ),
+        )
+        if logogram_num < total_logograms
+        else None
+    )
+    previous_url = (
+        request.build_absolute_uri(
+            reverse(
+                "api-sentence-session-word-logogram",
+                kwargs={
+                    "session_id": str(sentence.pk),
+                    "sentence_num": sentence_num,
+                    "word_num": word_num,
+                    "logogram_num": logogram_num - 1,
+                },
+            ),
+        )
+        if logogram_num > 1
+        else None
+    )
+    return Response(
+        {
+            "count": total_logograms,
+            "next": next_url,
+            "previous": previous_url,
+            "payload": LogogramSerializer(logogram).data,
+        },
     )

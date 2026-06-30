@@ -13,7 +13,7 @@ from neves_be.practice_sessions.models import PracticeSessionMeta
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
-    from neves_be.radical_assessments.models import RadicalSessionAssessment
+    from neves_be.practice_assessments.models import RadicalSessionAssessment
 
     class Meta:
         ordering = ["-created_at"]

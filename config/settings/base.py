@@ -81,13 +81,13 @@ REST_FRAMEWORK = {
 }
 
 LOCAL_APPS = [
-    "neves_be.users",
     "neves_be.language_model.apps.LanguageModelConfig",
+    "neves_be.practice_assessments.apps.PracticeAssessmentsConfig",
+    "neves_be.practice_questions.apps.PracticeQuestionsConfig",
     "neves_be.practice_sessions.apps.PracticeSessionsConfig",
     "neves_be.radical_sessions.apps.RadicalSessionsConfig",
     "neves_be.sentence_sessions.apps.SentenceSessionsConfig",
-    "neves_be.sentence_session_sentences.apps.SentenceSessionSentencesConfig",
-    "neves_be.practice_assessments.apps.PracticeAssessmentsConfig",
+    "neves_be.users",
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -103,7 +103,6 @@ MIGRATION_MODULES = {"sites": "neves_be.contrib.sites.migrations"}
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
@@ -145,7 +144,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
     "neves_be.common.middleware.ServerErrorTracebackLoggingMiddleware",
 ]
 
@@ -192,7 +190,6 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
-                "neves_be.users.context_processors.allauth_settings",
             ],
         },
     },
@@ -241,9 +238,6 @@ ADMIN_URL = "admin/"
 ADMINS = ['"Lucas Calegario" <lucas.c.calegario@outlook.com>']
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
-# https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
-# Force the `admin` sign in process to go through the `django-allauth` workflow
-DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
 
 # LOGGING
 # ------------------------------------------------------------------------------
@@ -271,24 +265,6 @@ LOGGING = {
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
 REDIS_SSL = REDIS_URL.startswith("rediss://")
 
-
-# django-allauth
-# ------------------------------------------------------------------------------
-ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_LOGIN_METHODS = {"username"}
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_ADAPTER = "neves_be.users.adapters.AccountAdapter"
-# https://docs.allauth.org/en/latest/account/forms.html
-ACCOUNT_FORMS = {"signup": "neves_be.users.forms.UserSignupForm"}
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_ADAPTER = "neves_be.users.adapters.SocialAccountAdapter"
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {"signup": "neves_be.users.forms.UserSocialSignupForm"}
 
 # CORS
 # ------------------------------------------------------------------------------

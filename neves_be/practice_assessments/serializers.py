@@ -4,10 +4,10 @@ from typing import assert_never
 from rest_framework import serializers
 
 from neves_be.common.serializers import CamelCaseAliasSerializerMixin
-from neves_be.practice_assessments.models import PracticeSessionAssessmentQuestion
-from neves_be.practice_assessments.models import PracticeSessionAssessmentQuestionAlt
 from neves_be.practice_assessments.models import RadicalSessionAssessment
 from neves_be.practice_assessments.models import SentenceSessionAssessment
+from neves_be.practice_questions.models import PracticeSessionAssessmentQuestion
+from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAlt
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
