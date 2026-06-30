@@ -70,7 +70,7 @@ class RadicalLogogramMap(models.Model):
 class Word(models.Model):
     id = models.IntegerField(primary_key=True)
     value = models.TextField(blank=True, default="")
-    pronounce = models.FileField()
+    pronounce = models.CharField(max_length=512)
     pos_tag = models.CharField(max_length=255, blank=True, default="")
     occurrences = models.PositiveIntegerField(default=0)
     word_logograms: RelatedManager[LogogramWordMap]

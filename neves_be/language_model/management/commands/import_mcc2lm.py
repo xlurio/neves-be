@@ -44,12 +44,13 @@ class Command(BaseCommand):
 
         sqlite_path = Path(options["sqlite_path"]).expanduser().resolve()
         batch_size = int(options["batch_size"])
+        word_miss_audio_count = 0
 
         if not sqlite_path.exists():
             msg = f"SQLite file not found: {sqlite_path}"
             raise CommandError(msg)
 
-        audio_dir = Path(settings.BASE_DIR) / "audio-cmn" / "18k-abr" / "syllabs"
+        audio_dir = Path(settings.BASE_DIR) / "audio-cmn" / "18k-abr"
         if not audio_dir.exists():
             self.stdout.write(
                 self.style.WARNING(f"Audio directory not found: {audio_dir}"),
@@ -64,21 +65,40 @@ class Command(BaseCommand):
 
                 radicals_query = "SELECT * FROM MCC2LM_RADICAL"
                 radicals_rows = cursor.execute(radicals_query).fetchall()
-                radical_models, missing_audio_count = build_radical_models(
+                radical_stp = build_radical_models(
                     radicals_rows,
-                    audio_dir,
+                    audio_dir / "syllabs",
                 )
-                Radical.objects.bulk_create(radical_models, batch_size=batch_size)
+                Radical.objects.bulk_create(
+                    radical_stp["radical_models"],
+                    batch_size=batch_size,
+                )
                 import_logograms(cursor, batch_size)
                 import_radical_logogram_maps(cursor, batch_size)
-                import_words(cursor, batch_size)
+                word_miss_audio_count = import_words(
+                    cursor,
+                    batch_size,
+                    audio_dir / "hsk",
+                )
                 import_logogram_word_maps(cursor, batch_size)
                 import_sentences(cursor, batch_size)
                 import_word_sentence_maps(cursor, batch_size)
 
+        self.__stdout_result(radical_stp["missing_audio_count"], word_miss_audio_count)
+
+    def __stdout_result(
+        self,
+        radical_miss_audio_count: int,
+        word_miss_audio_count: int,
+    ) -> None:
         self.stdout.write(self.style.SUCCESS("MCC2LM import finished successfully."))
         self.stdout.write(f"Radicals imported: {Radical.objects.count()}")
         self.stdout.write(f"Logograms imported: {Logogram.objects.count()}")
         self.stdout.write(f"Words imported: {Word.objects.count()}")
         self.stdout.write(f"Sentences imported: {Sentence.objects.count()}")
-        self.stdout.write(f"Radicals without matching audio: {missing_audio_count}")
+        self.stdout.write(
+            f"Radicals without matching audio: {radical_miss_audio_count}",
+        )
+        self.stdout.write(
+            f"Words without matching audio: {word_miss_audio_count}",
+        )

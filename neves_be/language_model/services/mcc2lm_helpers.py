@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING
+from typing import TypedDict
 from typing import overload
 
 from neves_be.language_model.models import Logogram
@@ -18,6 +19,7 @@ from neves_be.radical_sessions.models import RadicalSessionRadical
 
 if TYPE_CHECKING:
     import sqlite3
+    from collections.abc import Sequence
     from pathlib import Path
 
 ACCENTED_PINYIN_REPLACEMENTS = {
@@ -90,10 +92,15 @@ def reset_radical_learning_tables() -> None:
     Radical.objects.all().delete()
 
 
+class RadicalModelSetup(TypedDict):
+    radical_models: Sequence[Radical]
+    missing_audio_count: int
+
+
 def build_radical_models(
     radicals_rows: list[sqlite3.Row],
     audio_dir: Path,
-) -> tuple[list[Radical], int]:
+) -> RadicalModelSetup:
     radical_models: list[Radical] = []
     missing_audio_count = 0
     for row in radicals_rows:
@@ -115,4 +122,8 @@ def build_radical_models(
                 pronounce=pronounce,
             ),
         )
-    return radical_models, missing_audio_count
+
+    return RadicalModelSetup(
+        radical_models=radical_models,
+        missing_audio_count=missing_audio_count,
+    )
