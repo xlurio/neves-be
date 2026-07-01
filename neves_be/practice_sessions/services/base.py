@@ -1,18 +1,14 @@
 import abc
-from typing import TYPE_CHECKING
 
 from django.db import models
 from django.http import Http404
+from rest_framework.request import Request
 
+from neves_be.practice_sessions.types import ConcretePracticeSession
+from neves_be.practice_sessions.types import ConcretePracticeSessionId
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.sentence_sessions.models import SentenceSession
-
-if TYPE_CHECKING:
-    from rest_framework.request import Request
-
-    from neves_be.practice_sessions.types import ConcretePracticeSession
-    from neves_be.practice_sessions.types import ConcretePracticeSessionId
-    from neves_be.users.models import User
+from neves_be.users.models import User
 
 
 class BasePracticeSessionAccessor:

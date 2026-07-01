@@ -2,7 +2,6 @@ volumes:
   neves_be_local_postgres_data: {}
   neves_be_local_postgres_data_backups: {}
 
-
 services:
   django:
     build:
@@ -19,8 +18,15 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     ports:
-      - '8000:8000'
+      - "8000:8000"
     command: /start
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   postgres:
     build:

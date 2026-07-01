@@ -1,19 +1,15 @@
 import abc
-from typing import TYPE_CHECKING
 from typing import assert_never
 
 from django.http import Http404
+from rest_framework.request import Request
 
 from neves_be.practice_assessments.models import RadicalSessionAssessment
 from neves_be.practice_assessments.models import SentenceSessionAssessment
-
-if TYPE_CHECKING:
-    from rest_framework.request import Request
-
-    from neves_be.practice_assessments.types import AssessmentType
-    from neves_be.practice_assessments.types import ConcretePracticeSessionAssessment
-    from neves_be.practice_assessments.types import PracticeSessionAssessmentId
-    from neves_be.users.models import User
+from neves_be.practice_assessments.types import AssessmentType
+from neves_be.practice_assessments.types import ConcretePracticeSessionAssessment
+from neves_be.practice_assessments.types import PracticeSessionAssessmentId
+from neves_be.users.models import User
 
 
 class BaseAssessmentAccessor(abc.ABC):

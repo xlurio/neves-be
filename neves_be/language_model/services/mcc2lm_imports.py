@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from neves_be.language_model.models import Logogram
@@ -13,23 +14,35 @@ from neves_be.language_model.services.audio_cmn import get_audio_path_from_pinyi
 from neves_be.language_model.services.mcc2lm_helpers import row_value
 
 if TYPE_CHECKING:
-    import pathlib
     import sqlite3
 
 
 def import_logograms(cursor: sqlite3.Cursor, batch_size: int) -> None:
+    _logger = logging.getLogger(import_logograms.__name__)
+
     logogram_rows = cursor.execute("SELECT * FROM MCC2LM_LOGOGRAM").fetchall()
 
     logogram_models: list[Logogram] = []
     for row in logogram_rows:
+        logogram = str(row_value(row, "ID"))
         pinyin = str(row_value(row, "PINYIN"))
+
+        try:
+            try:
+                pronounce = get_audio_path_from_chinese(logogram)
+            except ValueError:
+                pronounce = get_audio_path_from_pinyin(pinyin)
+        except ValueError:
+            _logger.warning("Failed to process logogram %s", logogram)
+            pronounce = ""
+
         logogram_models.append(
             Logogram(
-                id=str(row_value(row, "ID")),
+                id=logogram,
                 occurrences=int(row_value(row, "OCCURRENCIES", 0) or 0),
                 pinyin=pinyin,
                 meaning=str(row_value(row, "MEANING")),
-                pronounce=get_audio_path_from_pinyin(pinyin),
+                pronounce=pronounce,
             ),
         )
 
@@ -53,28 +66,20 @@ def import_radical_logogram_maps(cursor: sqlite3.Cursor, batch_size: int) -> Non
     )
 
 
-def import_words(
-    cursor: sqlite3.Cursor,
-    batch_size: int,
-    audio_dir: pathlib.Path,
-) -> int:
+def import_words(cursor: sqlite3.Cursor, batch_size: int) -> int:
     word_rows = cursor.execute("SELECT * FROM MCC2LM_WORD").fetchall()
-    word_models: list[Word] = []
-
-    for row in word_rows:
-        word_str = str(row_value(row, "VALUE"))
-        word_models.append(
-            Word(
-                id=int(row_value(row, "ID", 0) or 0),
-                value=word_str,
-                pos_tag=str(row_value(row, "POS_TAG")),
-                occurrences=int(row_value(row, "OCCURRENCIES", 0) or 0),
-                pronounce=get_audio_path_from_chinese(word_str),
-            ),
-        )
 
     Word.objects.bulk_create(
-        word_models,
+        [
+            Word(
+                id=int(row_value(row, "ID", 0) or 0),
+                value=str(row_value(row, "VALUE")),
+                pos_tag=str(row_value(row, "POS_TAG")),
+                occurrences=int(row_value(row, "OCCURRENCIES", 0) or 0),
+                pronounce="",
+            )
+            for row in word_rows
+        ],
         batch_size=batch_size,
     )
 

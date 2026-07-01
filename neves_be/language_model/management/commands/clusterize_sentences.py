@@ -1,11 +1,7 @@
-from typing import TYPE_CHECKING
-
 import numpy as np
 from django.core.management.base import BaseCommand
-from language_model.models import Sentence
-from language_model.models import SentenceCluster
-from language_model.models import Word
-from language_model.models import WordSentenceMap
+from django.db import models
+from django.db import transaction
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import HashingVectorizer
@@ -13,13 +9,16 @@ from sklearn.metrics import silhouette_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
-if TYPE_CHECKING:
-    from django.db import models
+from neves_be.language_model.models import Sentence
+from neves_be.language_model.models import SentenceCluster
+from neves_be.language_model.models import Word
+from neves_be.language_model.models import WordSentenceMap
 
 
 class Command(BaseCommand):
     help = "Clusterize sentences by similarity"
 
+    @transaction.atomic
     def handle(self, *args, **options) -> None:
         del args, options
 
@@ -32,8 +31,13 @@ class Command(BaseCommand):
         )
 
         cluster = MiniBatchKMeans()
-        labels = cluster.fit_predict(preprocessing.fit_transform(sentences))
-        _silhouette_score = silhouette_score(sentences, labels, sample_size=1e4)
+        prep_sentences = preprocessing.fit_transform(sentences)
+        labels = cluster.fit_predict(prep_sentences)
+        _silhouette_score = silhouette_score(
+            prep_sentences,
+            labels,
+            sample_size=int(1e4),
+        )
 
         SentenceCluster.objects.bulk_create(
             SentenceCluster(id=label) for label in np.unique(labels)
@@ -46,9 +50,15 @@ class Command(BaseCommand):
             curr_sentence.cluster_id = label
             sentences_to_update.append(curr_sentence)
 
-        Sentence.objects.bulk_update(sentences_to_update)
+        Sentence.objects.bulk_update(
+            sentences_to_update,
+            fields={"cluster_id"},
+            batch_size=1024,
+        )
 
-        self.stdout.write(self.style.SUCCESS("Sentences successfully clustered"))
+        self.stdout.write(
+            self.style.SUCCESS("Sentences successfully clustered"),
+        )
         self.stdout.write(f"silhouette_score={_silhouette_score}")
 
     def __get_sentences_qs(self) -> models.QuerySet[Sentence]:

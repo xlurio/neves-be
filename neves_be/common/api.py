@@ -42,7 +42,7 @@ def load_request_data(request: Request) -> dict[str, Any]:
         return request.data
     try:
         return dict(request.data)
-    except TypeError, ValueError, JSONDecodeError:
+    except (TypeError, ValueError, JSONDecodeError):
         return {}
 
 

@@ -1,5 +1,7 @@
-from typing import TYPE_CHECKING
 from typing import assert_never
+from urllib.request import Request
+
+from rest_framework import serializers
 
 from neves_be.language_model.models import SentenceCluster
 from neves_be.practice_sessions.serializers import RadicalSessionSerializer
@@ -10,16 +12,10 @@ from neves_be.practice_sessions.services.base import RadicalSessionAccessor
 from neves_be.practice_sessions.services.base import SentenceSessionAccessor
 from neves_be.practice_sessions.services.radicals import RadicalSessionFactory
 from neves_be.practice_sessions.services.sentences import SentenceSessionFactory
+from neves_be.practice_sessions.types import SessionType
 from neves_be.radical_sessions.models import RadicalSession
-
-if TYPE_CHECKING:
-    from urllib.request import Request
-
-    from rest_framework import serializers
-
-    from neves_be.practice_sessions.types import SessionType
-    from neves_be.sentence_sessions.types import SentencesStatistics
-    from neves_be.users.models import User
+from neves_be.sentence_sessions.types import SentencesStatistics
+from neves_be.users.models import User
 
 
 def make_session_getter(

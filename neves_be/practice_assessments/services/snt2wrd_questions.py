@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from typing import TYPE_CHECKING
 from typing import TypedDict
@@ -5,6 +7,10 @@ from typing import assert_never
 
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
+from neves_be.practice_assessments.constants import MASK_TOKEN
+from neves_be.practice_assessments.services.masked_sentence_audio import (
+    get_or_create_audio_for_txt,
+)
 from neves_be.practice_assessments.services.questions import AlternativesSetup
 from neves_be.practice_assessments.services.questions import BasePracticeQuestionFactory
 from neves_be.practice_assessments.services.questions import PracticeQuestionSetup
@@ -73,7 +79,7 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
         selected_word = random.choice(
             Word.objects.filter(word_sentences__sentence=sentence),
         )
-        processed_sentence = sentence.value.replace(selected_word.value, "[HIDDEN]")
+        processed_sentence = sentence.value.replace(selected_word.value, MASK_TOKEN)
         audio = ""
 
         if question_type in {
@@ -81,7 +87,7 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
             "SENTENCE-AUDIO-TO-WORD-TEXT",
         }:
             question_txt = "What word is missing in the following audio?"
-            audio = self.__get_or_create_audio_for(question_txt)
+            audio = get_or_create_audio_for_txt(question_txt)
         elif question_type in {
             "SENTENCE-TEXT-TO-WORD-AUDIO",
             "SENTENCE-TEXT-TO-WORD-TEXT",
@@ -172,7 +178,3 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
 
         assert_never(alternative_type)
         return None
-
-    def __get_or_create_audio_for(self, question_txt: str) -> str:
-        del question_txt
-        raise NotImplementedError

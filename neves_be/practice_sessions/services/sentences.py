@@ -1,17 +1,13 @@
-from typing import TYPE_CHECKING
-
 from django.db import models
 from django.db.models import functions as dj_funcs
 
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
 from neves_be.practice_sessions.services.base import BaseSessionFactory
+from neves_be.practice_sessions.types import ConcretePracticeSession
 from neves_be.radical_sessions.exceptions import PracticeSessionCreationError
 from neves_be.sentence_sessions.models import SentenceSession
 from neves_be.sentence_sessions.models import SentenceSessionSentence
-
-if TYPE_CHECKING:
-    from neves_be.practice_sessions.types import ConcretePracticeSession
 
 
 class SentenceSessionFactory(BaseSessionFactory):

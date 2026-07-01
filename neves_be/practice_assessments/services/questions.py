@@ -1,16 +1,11 @@
 import abc
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
 from typing import TypedDict
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from neves_be.practice_assessments.models import PracticeSessionAssessment
-    from neves_be.practice_questions.models import PracticeSessionAssessmentQuestion
-    from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAlt
-    from neves_be.practice_questions.models import (
-        PracticeSessionAssessmentQuestionAnswer,
-    )
+from neves_be.practice_assessments.models import PracticeSessionAssessment
+from neves_be.practice_questions.models import PracticeSessionAssessmentQuestion
+from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAlt
+from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
 
 
 class PracticeQuestionSetup(TypedDict):

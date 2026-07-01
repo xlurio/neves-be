@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 from typing import overload
 
@@ -31,7 +32,7 @@ def row_value(row: sqlite3.Row, key: str, default: int) -> int: ...
 def row_value(row: sqlite3.Row, key: str, default: object = "") -> object:
     try:
         value = row[key]
-    except IndexError, KeyError:
+    except (IndexError, KeyError):
         return default
     return value if value is not None else default
 
@@ -54,18 +55,28 @@ def import_radicals(
     cursor: sqlite3.Cursor,
     batch_size: int,
 ) -> None:
+    _logger = logging.getLogger(import_radicals.__name__)
     radicals_query = "SELECT * FROM MCC2LM_RADICAL"
     radicals_rows = cursor.execute(radicals_query).fetchall()
+    radical_models = []
+
+    for row in radicals_rows:
+        radical = str(row_value(row, "ID"))
+
+        try:
+            radical_models.append(
+                Radical(
+                    id=radical,
+                    pinyin=str(row_value(row, "PINYIN")),
+                    meaning=str(row_value(row, "MEANING")),
+                    pronounce=get_audio_path_from_pinyin(str(row_value(row, "PINYIN"))),
+                ),
+            )
+        except ValueError:
+            _logger.exception("Failed to process radical %s", radical)
+            raise
 
     Radical.objects.bulk_create(
-        [
-            Radical(
-                id=str(row_value(row, "ID")),
-                pinyin=str(row_value(row, "PINYIN")),
-                meaning=str(row_value(row, "MEANING")),
-                pronounce=get_audio_path_from_pinyin(str(row_value(row, "PINYIN"))),
-            )
-            for row in radicals_rows
-        ],
+        radical_models,
         batch_size=batch_size,
     )

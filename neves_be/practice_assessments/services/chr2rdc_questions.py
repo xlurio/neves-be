@@ -1,11 +1,13 @@
 import random
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
 from typing import cast
 
 from neves_be.language_model.models import Logogram
 from neves_be.language_model.models import Radical
 from neves_be.language_model.models import RadicalLogogramMap
+from neves_be.language_model.types import LogogramId
+from neves_be.practice_assessments.models import PracticeSessionAssessment
 from neves_be.practice_assessments.services.questions import AlternativesSetup
 from neves_be.practice_assessments.services.questions import BasePracticeQuestionFactory
 from neves_be.practice_assessments.services.questions import PracticeQuestionSetup
@@ -13,13 +15,7 @@ from neves_be.practice_questions.models import PracticeAssessmentAlternativeType
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
 from neves_be.practice_questions.models import SentenceSessionAssessmentQuestion
 from neves_be.practice_questions.models import SentenceSessionAssessmentQuestionAlt
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from neves_be.language_model.types import LogogramId
-    from neves_be.practice_assessments.models import PracticeSessionAssessment
-    from neves_be.sentence_sessions.models import SentenceSession
+from neves_be.sentence_sessions.models import SentenceSession
 
 
 class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):

@@ -1,5 +1,5 @@
 # define an alias for the specific python version used in this file.
-FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS python
 
 # Python build stage
 FROM python AS python-build-stage
@@ -18,7 +18,14 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg dependencies
   libpq-dev \
   gettext \
-  wait-for-it
+  wait-for-it \
+  wget \
+  sox
+
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb && \
+  dpkg -i cuda-keyring_1.1-1_all.deb && \
+  apt-get update && \
+  apt-get -y install cuda-toolkit-13-3
 
 # Requirements are installed here to ensure they will be cached.
 RUN --mount=type=cache,target=/root/.cache/uv \

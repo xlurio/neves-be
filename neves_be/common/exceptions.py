@@ -1,10 +1,8 @@
-from typing import TYPE_CHECKING
 from typing import Any
 
 from rest_framework import status
 
-if TYPE_CHECKING:
-    from neves_be.common.api import ErrorCode
+from neves_be.common.api import ErrorCode
 
 
 class NevesBackEndError(Exception):

@@ -31,9 +31,9 @@ class Radical(models.Model):
 class Logogram(models.Model):
     id = models.CharField(max_length=4, primary_key=True)
     occurrences = models.PositiveIntegerField(default=0)
-    pinyin = models.TextField(blank=True, default="")
-    meaning = models.TextField(blank=True, default="")
-    pronounce: models.CharField[str, str] = models.CharField(max_length=512)
+    pinyin = models.TextField()
+    meaning = models.TextField()
+    pronounce: models.CharField[str, str] = models.CharField(max_length=512, blank=True)
     logogram_radicals: RelatedManager[RadicalLogogramMap]
 
     class Meta:
@@ -70,10 +70,10 @@ class RadicalLogogramMap(models.Model):
 
 class Word(models.Model):
     id = models.IntegerField(primary_key=True)
-    value = models.TextField(blank=True, default="")
-    pronounce: models.CharField[str, str] = models.CharField(max_length=512)
-    pos_tag = models.CharField(max_length=255, blank=True, default="")
-    occurrences = models.PositiveIntegerField(default=0)
+    value = models.TextField()
+    pronounce: models.CharField[str, str] = models.CharField(max_length=512, blank=True)
+    pos_tag = models.CharField(max_length=255)
+    occurrences = models.PositiveIntegerField()
     word_logograms: RelatedManager[LogogramWordMap]
     word_sentences: RelatedManager[WordSentenceMap]
 

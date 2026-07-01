@@ -7,10 +7,10 @@ license = { text = "GPLv3" }
 authors = [
   { name = "Lucas Calegario", email = "lucas.c.calegario@outlook.com" },
 ]
-requires-python = "==3.14.*"
+requires-python = "==3.12.*"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
   "argon2-cffi==25.1.0",
@@ -24,12 +24,16 @@ dependencies = [
   "django-redis==7.0.0",
   "django-storages[s3]==1.14.6",
   "djangorestframework==3.16.1",
+  "flash-attn",
   "gunicorn==26.0.0",
   "hiredis==3.4.0",
   "pillow==12.2.0",
   "psycopg[c]==3.3.4",
   "python-slugify==8.0.4",
+  "qwen-tts>=0.1.1",
   "redis==8.0.0",
+  "torch",
+  "torchaudio",
 ]
 
 [dependency-groups]
@@ -57,6 +61,11 @@ dev = [
 mining = [
   "scikit-learn>=1.9.0",
 ]
+
+[tool.uv]
+sources.flash-attn = { url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu13torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl" }
+sources.torch = { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.9.1%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl" }
+sources.torchaudio = { url = "https://download-r2.pytorch.org/whl/cu130/torchaudio-2.9.1%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl" }
 
 # ==== djLint ====
 [tool.djlint]

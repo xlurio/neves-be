@@ -91,7 +91,7 @@ def practice_assessment_answer_view(
 
     try:
         question_num = int(str(data.get("questionNum", "")))
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return error_response(
             "INVALID_QUESTION",
             "Invalid question",

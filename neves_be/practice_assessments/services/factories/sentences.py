@@ -5,6 +5,8 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 from typing import cast
 
+from django.db import transaction
+
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
 from neves_be.language_model.models import WordSentenceMap
@@ -40,6 +42,7 @@ class SentenceAssessmentFactory(BaseAssessmentFactory):
     MINIMUM_WORDS_LEARNED_RATE = 0.8
     MAXIMUM_ITERATIONS = 1e3
 
+    @transaction.atomic()
     def make_assessment(
         self,
         session: ConcretePracticeSession,
