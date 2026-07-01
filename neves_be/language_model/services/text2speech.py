@@ -8,8 +8,8 @@ import torch
 from django.core.files.base import File
 from qwen_tts import Qwen3TTSModel
 
+from neves_be.language_model.models import GeneratedSpeech
 from neves_be.practice_assessments.constants import MASK_TOKEN
-from neves_be.practice_assessments.models import MaskedSentenceAudio
 
 
 @functools.cache
@@ -22,8 +22,8 @@ def make_tts_model():
     )
 
 
-def get_or_create_audio_for_txt(text: str) -> str:
-    if audio_model := MaskedSentenceAudio.objects.get(id=hash(text)):
+def generate_speech(text: str) -> str:
+    if audio_model := GeneratedSpeech.objects.get(id=hash(text)):
         return audio_model.audio.url
 
     wavs, sr = make_tts_model().generate_voice_clone(
@@ -33,7 +33,7 @@ def get_or_create_audio_for_txt(text: str) -> str:
         ref_text="甚至出现交易几乎停滞的情况。",
     )
 
-    audio_model = MaskedSentenceAudio.objects.create(id=hash(text))
+    audio_model = GeneratedSpeech.objects.create(id=hash(text))
 
     with tempfile.NamedTemporaryFile("w+") as audio_file:
         sf.write(audio_file.name, wavs[0], sr)

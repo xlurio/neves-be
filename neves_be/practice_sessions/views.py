@@ -39,7 +39,7 @@ def stats_me_view(request: Request) -> Response:
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def practice_sessions_view(request: Request, session_type: SessionType) -> Response:
-    serializer_cls = make_session_serializer(request.user, session_type)
+    serializer_cls = make_session_serializer(session_type)
 
     if request.method == "GET":
         getter = make_session_getter(request.user, session_type)
@@ -64,7 +64,7 @@ def practice_session_detail_view(
     session_type: SessionType,
     session_id: ConcretePracticeSessionId,
 ) -> Response:
-    serializer_cls = make_session_serializer(request.user, session_type)
+    serializer_cls = make_session_serializer(session_type)
     getter = make_session_getter(request.user, session_type)
 
     return Response(

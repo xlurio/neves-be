@@ -5,4 +5,4 @@ from neves_be.radical_sessions.models import RadicalSession
 
 class RadicalSessionFactory(BaseSessionFactory):
     def make_assessment(self) -> ConcretePracticeSession:
-        return RadicalSession.objects.create(user=self.__user)
+        return RadicalSession.objects.create(user=self._user)

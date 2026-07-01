@@ -55,11 +55,3 @@ class SentenceSessionAssessment(PracticeSessionAssessment):
 
     class Meta:
         ordering = ["-finished_at", "id"]
-
-
-class MaskedSentenceAudio(models.Model):
-    id = models.IntegerField(primary_key=True)
-    audio = models.FileField()
-
-    def __str__(self) -> str:
-        return f"masked sentence audio {self.id}: {self.audio.path}"

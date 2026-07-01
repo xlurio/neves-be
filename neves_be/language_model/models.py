@@ -162,3 +162,19 @@ class WordSentenceMap(models.Model):
 
     def __str__(self) -> str:
         return f"{self.sentence_id}:{self.word_id}"
+
+
+class GeneratedSpeech(models.Model):
+    id = models.IntegerField(primary_key=True)
+    audio = models.FileField()
+
+    def __str__(self) -> str:
+        return f"masked sentence audio {self.id}: {self.audio.path}"
+
+
+class Translation(models.Model):
+    id = models.IntegerField(primary_key=True)
+    output = models.TextField()
+
+    def __str__(self):
+        return f"translation {self.id}: {self.output}"

@@ -11,6 +11,8 @@ from neves_be.language_model.models import Logogram
 from neves_be.language_model.models import Radical
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
+from neves_be.language_model.services.text2speech import generate_speech
+from neves_be.language_model.services.translation import generate_translation
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -48,6 +50,9 @@ class RadicalSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializ
 
 
 class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    meaning = serializers.SerializerMethodField()
+    pronounce = serializers.SerializerMethodField()
+
     class Meta:
         model = Sentence
         fields = ["id", "value"]
@@ -55,6 +60,12 @@ class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSeriali
     def get_fields(self) -> MutableMapping[str, Field]:
         fields = super().get_fields()
         return self._rename_camel_case_fields(fields)
+
+    def get_meaning(self, instance: Sentence) -> str:
+        return generate_translation(instance.value)
+
+    def get_pronounce(self, instance: Sentence) -> str:
+        return generate_speech(instance.value)
 
 
 class WordSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
@@ -66,7 +77,8 @@ class WordSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer)
 
     def get_pronounce(self, instance: Word) -> str:
         if not instance.pronounce:
-            return ""
+            return generate_speech(instance.value)
+
         if instance.pronounce.startswith(("http://", "https://")):
             return instance.pronounce
 
@@ -94,9 +106,10 @@ class LogogramSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSeriali
 
         return RadicalSerializer(radical_qs, many=True)
 
-    def get_pronounce(self, instance: Word) -> str:
+    def get_pronounce(self, instance: Logogram) -> str:
         if not instance.pronounce:
-            return ""
+            return generate_speech(instance.id)
+
         if instance.pronounce.startswith(("http://", "https://")):
             return instance.pronounce
 

@@ -25,6 +25,9 @@ pull:
 stop:
 	$(dockercompose) stop
 
+stopdjango:
+	$(dockercompose) stop django
+
 up:
 	$(dockercomposeup)
 

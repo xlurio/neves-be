@@ -1,8 +1,13 @@
+from collections import defaultdict
+from collections.abc import Sequence
+
 from django.db import models
 from django.db.models import functions as dj_funcs
 
 from neves_be.language_model.models import Sentence
 from neves_be.language_model.models import Word
+from neves_be.language_model.models import WordSentenceMap
+from neves_be.language_model.types import SentenceId
 from neves_be.practice_sessions.services.base import BaseSessionFactory
 from neves_be.practice_sessions.types import ConcretePracticeSession
 from neves_be.radical_sessions.exceptions import PracticeSessionCreationError
@@ -14,7 +19,7 @@ class SentenceSessionFactory(BaseSessionFactory):
     def make_assessment(self) -> ConcretePracticeSession:
         sentence_session_sentence_sqs = SentenceSessionSentence.objects.filter(
             sentence__cluster_id=models.OuterRef("cluster_id"),
-            session__user=self.__user,
+            session__user=self._user,
         ).values("sentence_id")
 
         maybe_sentence = (
@@ -41,27 +46,55 @@ class SentenceSessionFactory(BaseSessionFactory):
 
         most_likely_sequences_in_cluster_qs = self.__annotate_likelihood_to_sentence_qs(
             cluster.sentences.get_queryset(),
-        ).order_by("-likelihood")[:3]  # type: ignore[misc]
+        ).order_by("-likelihood")  # type: ignore[misc]
 
         session_sentences_to_create = []
 
         new_session = SentenceSession.objects.create(
-            user=self.__user,
+            user=self._user,
             sentence_cluster=cluster,
         )
 
-        for sentence_idx, sentence in enumerate(most_likely_sequences_in_cluster_qs):
+        cluster_words = set(
+            Word.objects.filter(word_sentences__sentence__cluster=cluster),
+        )
+        session_words = set()
+        sentence2word_mapping = self.__make_sentence_2_words_mapping(
+            most_likely_sequences_in_cluster_qs,
+        )
+        curr_idx = 0
+        MAX_ITER = 20  # noqa: N806
+
+        while (
+            len(cluster_words.intersection(session_words)) > len(cluster_words) * 0.9
+            or curr_idx < MAX_ITER
+        ):
+            curr_sentence = most_likely_sequences_in_cluster_qs[curr_idx]
+            session_words.union(sentence2word_mapping[curr_sentence.pk])
+
             session_sentences_to_create.append(
                 SentenceSessionSentence(
                     session=new_session,
-                    sentence=sentence,
-                    position=sentence_idx,
+                    sentence=curr_sentence,
+                    position=curr_idx + 1,
                 ),
             )
 
         SentenceSessionSentence.objects.bulk_create(session_sentences_to_create)
 
         return new_session
+
+    def __make_sentence_2_words_mapping(
+        self,
+        sentences: Sequence[Sentence],
+    ) -> dict[SentenceId, list[Word]]:
+        word_sentence_pairs = WordSentenceMap.objects.filter(sentence__in=sentences)
+        result = defaultdict(list)
+
+        for word_sentence_pair in word_sentence_pairs:
+            result[word_sentence_pair.sentence_id].append(word_sentence_pair.word)
+
+        return result
 
     def __annotate_likelihood_to_sentence_qs(
         self,

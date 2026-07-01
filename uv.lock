@@ -1286,6 +1286,7 @@ dependencies = [
     { name = "redis" },
     { name = "torch" },
     { name = "torchaudio" },
+    { name = "transformers" },
 ]
 
 [package.dev-dependencies]
@@ -1337,6 +1338,7 @@ requires-dist = [
     { name = "redis", specifier = "==8.0.0" },
     { name = "torch", url = "https://download-r2.pytorch.org/whl/cu130/torch-2.9.1%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl" },
     { name = "torchaudio", url = "https://download-r2.pytorch.org/whl/cu130/torchaudio-2.9.1%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl" },
+    { name = "transformers", specifier = ">=4.57.3" },
 ]
 
 [package.metadata.requires-dev]

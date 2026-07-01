@@ -49,11 +49,11 @@ class SentenceSessionAccessor(BasePracticeSessionAccessor):
 
 class BaseSessionFactory(abc.ABC):
     def __init__(self, user: User) -> None:
-        self.__user = user
+        self._user = user
 
     @abc.abstractmethod
     def make_assessment(self) -> ConcretePracticeSession: ...
 
     @property
     def user(self) -> Request:
-        return self.__user
+        return self._user
