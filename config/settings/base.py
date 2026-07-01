@@ -1,9 +1,12 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
+import sys
 from pathlib import Path
 
 import environ
+
+sys.setrecursionlimit(2**31 - 1)
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # neves_be/

@@ -141,12 +141,13 @@ lint.select = [
   "YTT",
 ]
 lint.ignore = [
-  "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
-  "S101",   # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
+  "PLR0913",
+  "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+  "S101",    # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
   # of types for comparison.
   # Deactivated because it can make the code slow:
   # https://github.com/astral-sh/ruff/issues/7871
-  "S311",   # Random is useful unless used for cryptography,
+  "S311",    # Random is useful unless used for cryptography,
   "SIM102"
 ]
 lint.exclude = [ "**/migrations/*.py", "config", "manage.py", "tests" ]
