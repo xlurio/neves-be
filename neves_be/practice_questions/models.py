@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import NewType
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -47,6 +48,12 @@ class PracticeSessionAssessmentQuestion(models.Model):
         abstract = True
 
 
+PracticeSessionAssessmentQuestionId = NewType(
+    "PracticeSessionAssessmentQuestionId",
+    int,
+)
+
+
 class PracticeAssessmentAlternativeTypeChoices(models.TextChoices):
     AUDIO = "AUDIO", "Audio"
     TEXT = "TEXT", "Text"
@@ -63,6 +70,7 @@ class PracticeSessionAssessmentQuestionAlt(models.Model):
     )
     payload = models.TextField()
     question: PracticeSessionAssessmentQuestion
+    question_id: PracticeSessionAssessmentQuestionId
 
     class Meta:
         abstract = True

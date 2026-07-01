@@ -11,12 +11,12 @@ urlpatterns = [
         name="api-practice-session-assessments",
     ),
     path(
-        "<slug:session_type>/assessment/<uuid:assessment_id>/finish",
+        "<slug:assessment_type>/assessment/<uuid:assessment_id>/finish",
         practice_assessment_finish_view,
         name="api-practice-assessment-finish",
     ),
     path(
-        "<slug:session_type>/sessions/assessments/<uuid:assessment_id>/result",
+        "<slug:assessment_type>/sessions/assessments/<uuid:assessment_id>/result",
         practice_assessment_result_view,
         name="api-practice-assessment-result",
     ),

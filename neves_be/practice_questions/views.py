@@ -43,8 +43,9 @@ def practice_assessment_question_view(
     next_url = (
         request.build_absolute_uri(
             reverse(
-                "api-practice-test-question",
+                "api-practice-assessment-question",
                 kwargs={
+                    "assessment_type": assessment_type,
                     "assessment_id": str(assessment.id),
                     "question_num": question_num + 1,
                 },
@@ -56,8 +57,9 @@ def practice_assessment_question_view(
     previous_url = (
         request.build_absolute_uri(
             reverse(
-                "api-practice-test-question",
+                "api-practice-assessment-question",
                 kwargs={
+                    "assessment_type": assessment_type,
                     "assessment_id": str(assessment.id),
                     "question_num": question_num - 1,
                 },
@@ -73,7 +75,10 @@ def practice_assessment_question_view(
             "previous": previous_url,
             "id": str(assessment.id),
             "sessionId": assessment.session.pk,
-            "payload": PracticeQuestionSerializer(question).data,
+            "payload": PracticeQuestionSerializer(
+                question,
+                context={"request": request},
+            ).data,
         },
     )
 

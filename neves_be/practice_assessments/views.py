@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.db import models
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def practice_assessment_finish_view(
     request: Request,
     assessment_type: AssessmentType,
@@ -92,6 +94,7 @@ def practice_assessment_result_view(
             "questions": PracticeQuestionResultSerializer(
                 assessment.questions.all(),
                 many=True,
+                context={"request": request},
             ).data,
         },
     )

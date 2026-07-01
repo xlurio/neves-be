@@ -1,6 +1,8 @@
 from collections.abc import MutableMapping
+from typing import TypedDict
 from typing import assert_never
 
+from django.http import HttpRequest
 from rest_framework import serializers
 from rest_framework.fields import Field
 
@@ -8,7 +10,6 @@ from neves_be.common.serializers import CamelCaseAliasSerializerMixin
 from neves_be.practice_assessments.models import RadicalSessionAssessment
 from neves_be.practice_assessments.models import SentenceSessionAssessment
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestion
-from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAlt
 from neves_be.practice_sessions.types import SessionType
 
 
@@ -58,35 +59,48 @@ def make_practice_assessment_srlr_cls(
     assert_never(session_type)
 
 
-class PracticeQuestionAltSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PracticeSessionAssessmentQuestionAlt
-        fields = {"letter", "type", "payload"}
+class PracticeQuestionAltSerializer(serializers.Serializer):
+    letter = serializers.CharField()
+    type = serializers.CharField()
+    payload = serializers.CharField()
+
+
+class PracticeQuestionSerializerContext(TypedDict):
+    request: HttpRequest
 
 
 class PracticeQuestionSerializer(
     CamelCaseAliasSerializerMixin,
-    serializers.ModelSerializer,
+    serializers.Serializer,
 ):
+    context: PracticeQuestionSerializerContext
+
+    id = serializers.IntegerField()
+    type = serializers.CharField()
+    question = serializers.CharField()
+    audio = serializers.SerializerMethodField()
+    alternatives = PracticeQuestionAltSerializer(
+        source="question_alternatives",
+        many=True,
+    )
+    curr_answer = serializers.CharField()
+
     camel_case_aliases = {
         "curr_answer": "currAnswer",
     }
-    alternatives = PracticeQuestionAltSerializer(many=True)
-
-    class Meta:
-        model = PracticeSessionAssessmentQuestion
-        fields = {"id", "type", "question", "audio", "alternatives", "currAnswer"}
 
     def get_fields(self) -> MutableMapping[str, Field]:
         fields = super().get_fields()
         return self._rename_camel_case_fields(fields)
 
+    def get_audio(self, instance: PracticeSessionAssessmentQuestion) -> str:
+        return self.context["request"].build_absolute_uri(instance.audio)
+
 
 class PracticeQuestionResultSerializer(PracticeQuestionSerializer):
+    expected_answer = serializers.CharField()
+
     camel_case_aliases = {
         **PracticeQuestionSerializer.camel_case_aliases,
         "expected_answer": "expectedAnswer",
     }
-
-    class Meta(PracticeQuestionSerializer.Meta):
-        fields = {*PracticeQuestionSerializer.Meta.fields, "expected_answer"}

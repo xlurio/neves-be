@@ -51,7 +51,7 @@ class RadicalAssessmentFactory(BaseAssessmentFactory):
             session_radicals,
             rng,
         )
-        questions = []
+
         alternatives_to_create: list[RadicalSessionAssessmentQuestionAlt] = []
         for number, radical in enumerate(assessment_radicals, start=1):
             question_rst = RadicalQuestionFactory(
@@ -59,8 +59,8 @@ class RadicalAssessmentFactory(BaseAssessmentFactory):
                 radical=radical,
                 radical_pool=radical_pool,
                 rng=rng,
-            ).make_question(number, radical)
-            questions.append(question_rst["question"])
+            ).make_question(assessment, number)
+
             alternatives_to_create.extend(question_rst["alternatives"])
 
         RadicalSessionAssessmentQuestionAlt.objects.bulk_create(
