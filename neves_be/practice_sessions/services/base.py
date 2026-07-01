@@ -44,7 +44,7 @@ class RadicalSessionAccessor(BasePracticeSessionAccessor):
 class SentenceSessionAccessor(BasePracticeSessionAccessor):
     SESSION_TYPE = SentenceSession
     NOT_FOUND_MSG = "Sentence session not found."
-    ITEMS_RELATED_NAME = "session_radicals"
+    ITEMS_RELATED_NAME = "session_sentences"
 
 
 class BaseSessionFactory(abc.ABC):

@@ -1,7 +1,7 @@
 from typing import assert_never
-from urllib.request import Request
 
 from rest_framework import serializers
+from rest_framework.request import Request
 
 from neves_be.language_model.models import SentenceCluster
 from neves_be.practice_sessions.serializers import RadicalSessionSerializer
@@ -60,7 +60,7 @@ def make_sentences_stats(request: Request) -> SentencesStatistics:
     )
 
     return {
-        "is_unlocked": RadicalSession.objects.filter(
+        "isUnlocked": RadicalSession.objects.filter(
             user=request.user,
             highest_score__gte=70,
         ).exists(),
