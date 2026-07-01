@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 
     from neves_be.practice_sessions.types import ConcretePracticeSessionId
     from neves_be.practice_sessions.types import SessionType
+    from neves_be.users.models import User
 
 
 class DefaultPagination(PageNumberPagination):
@@ -30,6 +32,7 @@ class DefaultPagination(PageNumberPagination):
 def stats_me_view(request: Request) -> Response:
     return Response(
         {
+            "username": cast("User", request.user).username,
             "radicals": make_radicals_stats(request),
             "sentences": make_sentences_stats(request),
         },
@@ -52,7 +55,7 @@ def practice_sessions_view(request: Request, session_type: SessionType) -> Respo
         )
 
     factory = make_session_factory(session_type, request.user)
-    new_practice_session = factory.make_assessment()
+    new_practice_session = factory.make_session()
 
     return Response(serializer_cls(new_practice_session).data)
 

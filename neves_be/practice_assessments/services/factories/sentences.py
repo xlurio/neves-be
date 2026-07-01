@@ -124,12 +124,12 @@ class SentenceAssessmentFactory(BaseAssessmentFactory):
 
     def __get_learned_sentences_qs(self, user: User) -> models.QuerySet[Sentence]:
         user_sessions = SentenceSession.objects.filter(user=user)
-        return Sentence.objects.filter(
-            sentence_sessions__session_id__in=user_sessions.values_list(
-                "pk",
-                flat=True,
-            ),
+
+        lrnd_wrds = Word.objects.filter(
+            word_sentences__sentence__sentence_sessions__in=user_sessions,
         )
+
+        return Sentence.objects.filter(sentence_words__word__in=lrnd_wrds)
 
     def __make_questions(
         self,

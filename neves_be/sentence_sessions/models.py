@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
-from neves_be.language_model.models import Sentence
-from neves_be.language_model.models import SentenceCluster
 from neves_be.practice_sessions.models import PracticeSession
 from neves_be.practice_sessions.models import PracticeSessionItem
 from neves_be.practice_sessions.models import PracticeSessionItemMeta
@@ -14,30 +12,17 @@ from neves_be.practice_sessions.models import PracticeSessionMeta
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
+    from neves_be.language_model.models import Sentence
     from neves_be.language_model.types import SentenceId
     from neves_be.practice_assessments.models import SentenceSessionAssessment
     from neves_be.sentence_sessions.types import SentenceSessionId
 
 
 class SentenceSession(PracticeSession):
-    sentence_cluster: models.ForeignKey[SentenceCluster, SentenceCluster] = (
-        models.ForeignKey(
-            SentenceCluster,
-            on_delete=models.CASCADE,
-            related_name="sentencecluster_sessions",
-        )
-    )
-
     session_sentences: RelatedManager[SentenceSessionSentence]
     assessments: RelatedManager[SentenceSessionAssessment]
 
-    class Meta(PracticeSessionMeta):
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "sentence_cluster"],
-                name="uniq_user_sentence_cluster",
-            ),
-        ]
+    class Meta(PracticeSessionMeta): ...
 
 
 class SentenceSessionSentence(PracticeSessionItem):
@@ -47,8 +32,8 @@ class SentenceSessionSentence(PracticeSessionItem):
         related_name="session_sentences",
     )
     session_id: SentenceSessionId
-    sentence = models.ForeignKey(
-        Sentence,
+    sentence: models.ForeignKey[Sentence, Sentence] = models.ForeignKey(
+        "language_model.Sentence",
         on_delete=models.CASCADE,
         related_name="sentence_sessions",
     )

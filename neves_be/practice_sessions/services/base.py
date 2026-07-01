@@ -52,7 +52,7 @@ class BaseSessionFactory(abc.ABC):
         self._user = user
 
     @abc.abstractmethod
-    def make_assessment(self) -> ConcretePracticeSession: ...
+    def make_session(self) -> ConcretePracticeSession: ...
 
     @property
     def user(self) -> Request:

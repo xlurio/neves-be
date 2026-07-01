@@ -1,7 +1,9 @@
+import logging
 from collections import defaultdict
 from collections.abc import Sequence
 
 from django.db import models
+from django.db import transaction
 from django.db.models import functions as dj_funcs
 
 from neves_be.language_model.models import Sentence
@@ -11,23 +13,36 @@ from neves_be.language_model.types import SentenceId
 from neves_be.practice_sessions.services.base import BaseSessionFactory
 from neves_be.practice_sessions.types import ConcretePracticeSession
 from neves_be.radical_sessions.exceptions import PracticeSessionCreationError
+from neves_be.radical_sessions.models import RadicalSession
 from neves_be.sentence_sessions.models import SentenceSession
 from neves_be.sentence_sessions.models import SentenceSessionSentence
 
 
 class SentenceSessionFactory(BaseSessionFactory):
-    def make_assessment(self) -> ConcretePracticeSession:
-        sentence_session_sentence_sqs = SentenceSessionSentence.objects.filter(
-            sentence__cluster_id=models.OuterRef("cluster_id"),
-            session__user=self._user,
-        ).values("sentence_id")
+    MIN_WORDS_RATE = 0.9
+    MAX_ITER = 10
+
+    @transaction.atomic
+    def make_session(self) -> ConcretePracticeSession:
+        _logger = logging.getLogger(self.make_session.__name__)
+        _logger.info("Creating sentences practice session")
+
+        not_learned_words = Word.objects.exclude(
+            word_sentences__sentence__sentence_sessions__in=self.__get_user_sessions(),
+        ).annotate(
+            likelihood=dj_funcs.Cast(
+                models.F("occurrences"),
+                output_field=models.FloatField(),
+            )
+            / dj_funcs.Cast(
+                self.__get_total_occurrences(),
+                output_field=models.FloatField(),
+            ),
+        )
 
         maybe_sentence = (
-            self.__annotate_likelihood_to_sentence_qs(  # type: ignore[misc]
-                Sentence.objects.exclude(
-                    pk__in=models.Subquery(sentence_session_sentence_sqs),
-                    cluster__sentencecluster_sessions__session_id__isnull=False,
-                ),
+            self.__annotate_likelihood_n_word_count_to_sentence_qs(  # type: ignore[misc]
+                Sentence.objects.filter(sentence_words__word__in=not_learned_words),
             )
             .order_by("-likelihood")
             .first()
@@ -42,11 +57,28 @@ class SentenceSessionFactory(BaseSessionFactory):
 
         cluster = maybe_sentence.cluster
 
+        _logger.info("Chosen cluster %d", cluster.id)
+
         assert cluster
 
-        most_likely_sequences_in_cluster_qs = self.__annotate_likelihood_to_sentence_qs(
-            cluster.sentences.get_queryset(),
-        ).order_by("-likelihood")  # type: ignore[misc]
+        words_w_known_rads = Word.objects.filter(
+            **{  # noqa: PIE804
+                "word_logograms__logogram__logogram_radicals__radical__"
+                "radical_sessions__session__"
+                "in": RadicalSession.objects.filter(
+                    user=self._user,
+                    highest_score__gte=70,
+                ),
+            },
+        )
+
+        most_likely_sequences_in_cluster_qs = (
+            self.__annotate_likelihood_n_word_count_to_sentence_qs(
+                cluster.sentences.get_queryset(),
+            )
+            .filter(sentence_words__word__in=words_w_known_rads)
+            .order_by("-word_count", "-likelihood")
+        )  # type: ignore[misc]
 
         session_sentences_to_create = []
 
@@ -63,14 +95,16 @@ class SentenceSessionFactory(BaseSessionFactory):
             most_likely_sequences_in_cluster_qs,
         )
         curr_idx = 0
-        MAX_ITER = 20  # noqa: N806
 
         while (
-            len(cluster_words.intersection(session_words)) > len(cluster_words) * 0.9
-            or curr_idx < MAX_ITER
+            len(cluster_words.intersection(session_words))
+            <= len(cluster_words) * self.MIN_WORDS_RATE
+            and curr_idx <= self.MAX_ITER
         ):
             curr_sentence = most_likely_sequences_in_cluster_qs[curr_idx]
-            session_words.union(sentence2word_mapping[curr_sentence.pk])
+            _logger.info("Appending '%s'", curr_sentence.value)
+
+            session_words = session_words.union(sentence2word_mapping[curr_sentence.pk])
 
             session_sentences_to_create.append(
                 SentenceSessionSentence(
@@ -80,15 +114,35 @@ class SentenceSessionFactory(BaseSessionFactory):
                 ),
             )
 
+            curr_idx += 1
+
         SentenceSessionSentence.objects.bulk_create(session_sentences_to_create)
 
+        wrds_to_learn_percentage = len(cluster_words.intersection(session_words)) / len(
+            cluster_words,
+        )
+
+        assert new_session.session_sentences.exists(), "No sentence was attached"
+        assert wrds_to_learn_percentage >= self.MIN_WORDS_RATE, (
+            f"{wrds_to_learn_percentage * 100}% learned"
+        )
+
         return new_session
+
+    def __get_user_sessions(self) -> models.QuerySet[SentenceSession]:
+        return SentenceSession.objects.filter(user=self._user)
 
     def __make_sentence_2_words_mapping(
         self,
         sentences: Sequence[Sentence],
     ) -> dict[SentenceId, list[Word]]:
-        word_sentence_pairs = WordSentenceMap.objects.filter(sentence__in=sentences)
+        _logger = logging.getLogger(self.__make_sentence_2_words_mapping.__name__)
+
+        _logger.info("Making sentence-words mapping")
+
+        word_sentence_pairs = WordSentenceMap.objects.filter(
+            sentence__in=sentences,
+        ).select_related("sentence", "word")
         result = defaultdict(list)
 
         for word_sentence_pair in word_sentence_pairs:
@@ -96,7 +150,7 @@ class SentenceSessionFactory(BaseSessionFactory):
 
         return result
 
-    def __annotate_likelihood_to_sentence_qs(
+    def __annotate_likelihood_n_word_count_to_sentence_qs(
         self,
         sentence_qs: models.QuerySet[Sentence],
     ) -> models.QuerySet[Sentence]:
@@ -118,3 +172,8 @@ class SentenceSessionFactory(BaseSessionFactory):
                 ),
             ),
         )
+
+    def __get_total_occurrences(self) -> int:
+        return Word.objects.aggregate(
+            occurrences_sum=models.Sum("occurrences"),
+        )["occurrences_sum"]

@@ -3,7 +3,7 @@ from typing import assert_never
 from rest_framework import serializers
 from rest_framework.request import Request
 
-from neves_be.language_model.models import SentenceCluster
+from neves_be.language_model.models import Word
 from neves_be.practice_sessions.serializers import RadicalSessionSerializer
 from neves_be.practice_sessions.serializers import SentenceSessionSerializer
 from neves_be.practice_sessions.services.base import BasePracticeSessionAccessor
@@ -64,8 +64,11 @@ def make_sentences_stats(request: Request) -> SentencesStatistics:
             user=request.user,
             highest_score__gte=70,
         ).exists(),
-        "progress": SentenceCluster.objects.filter(
-            sentencecluster_sessions__in=session_w_score_within_limits,  # type: ignore[misc,unused-ignore]
+        "progress": Word.objects.filter(
+            **{  # noqa: PIE804
+                "word_sentences__sentence__sentence_sessions__session__"
+                "in": session_w_score_within_limits,
+            },  # type: ignore[misc,unused-ignore]
         ).count()
-        / SentenceCluster.objects.all().count(),
+        / 1000,
     }

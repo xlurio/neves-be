@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
     from neves_be.language_model.types import LogogramId
-    from neves_be.language_model.types import SentenceClusterId
     from neves_be.language_model.types import SentenceId
     from neves_be.radical_sessions.models import RadicalSessionRadical
     from neves_be.sentence_sessions.models import SentenceSessionSentence
@@ -104,31 +103,9 @@ class LogogramWordMap(models.Model):
         return f"{self.word_id}:{self.logogram_id}"
 
 
-class SentenceCluster(models.Model):
-    id = models.IntegerField(primary_key=True)
-    sentences: RelatedManager[Sentence]
-    sentencecluster_sessions: RelatedManager[SentenceSessionSentence]
-
-    def __str__(self) -> str:
-        if maybe_sentence := self.sentences.order_by("id").first():
-            return maybe_sentence.value[:50]
-
-        return str(self.pk)
-
-
 class Sentence(models.Model):
     id: models.IntegerField[int, SentenceId] = models.IntegerField(primary_key=True)
     value: models.TextField[str, str] = models.TextField()
-    cluster: models.ForeignKey[SentenceCluster, SentenceCluster | None] = (
-        models.ForeignKey(
-            SentenceCluster,
-            on_delete=models.SET_NULL,
-            related_name="sentences",
-            null=True,
-            default=None,
-        )
-    )
-    cluster_id: SentenceClusterId
     sentence_words: RelatedManager[WordSentenceMap]
     sentence_sessions: RelatedManager[SentenceSessionSentence]
 
