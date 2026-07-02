@@ -12,11 +12,9 @@ services:
     depends_on:
       - postgres
     volumes:
-      - /app/.venv
       - .:/app:z
     env_file:
-      - ./.envs/.local/.django
-      - ./.envs/.local/.postgres
+      - .env
     ports:
       - "8000:8000"
     command: /start
@@ -29,15 +27,21 @@ services:
               capabilities: [gpu]
 
   postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: neves_be_production_postgres
+    image: postgres:18
     container_name: neves_be_local_postgres
     ports:
       - 5434:5432
     volumes:
-      - neves_be_local_postgres_data:/var/lib/postgresql/18/docker
-      - neves_be_local_postgres_data_backups:/backups
-    env_file:
-      - ./.envs/.local/.postgres
+      - neves_be_local_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: neves-be

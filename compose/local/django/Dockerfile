@@ -4,9 +4,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS python
 # Python build stage
 FROM python AS python-build-stage
 
-ARG APP_HOME=/app
-
-WORKDIR ${APP_HOME}
+WORKDIR /app
 
 # we need to move the virtualenv outside of the $APP_HOME directory because it will be overriden by the docker compose mount
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0
@@ -33,7 +31,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock:rw \
     uv sync --no-install-project
 
-COPY . ${APP_HOME}
+COPY ./manage.py /app/manage.py
+COPY ./README.md /app/README.md
+COPY ./LICENSE /app/LICENSE
+COPY ./pyproject.toml /app/pyproject.toml
+COPY ./config /app/config
+COPY ./neves-be /app/neves-be
+COPY ./tests /app/tests
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
@@ -60,7 +64,5 @@ RUN chmod +x /entrypoint
 COPY ./compose/local/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
-
-
 
 ENTRYPOINT ["/entrypoint"]
