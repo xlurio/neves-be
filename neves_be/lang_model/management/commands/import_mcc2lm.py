@@ -10,6 +10,8 @@ from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 from django.db import transaction
 
+from neves_be.char_lm.models import Logogram
+from neves_be.char_lm.models import Radical
 from neves_be.lang_model.services.mcc2lm_helpers import import_radicals
 from neves_be.lang_model.services.mcc2lm_helpers import reset_radical_learning_tables
 from neves_be.lang_model.services.mcc2lm_imports import import_logogram_word_maps
@@ -21,9 +23,7 @@ from neves_be.lang_model.services.mcc2lm_imports import import_sentences
 from neves_be.lang_model.services.mcc2lm_imports import import_word_ngram_maps
 from neves_be.lang_model.services.mcc2lm_imports import import_word_sentence_maps
 from neves_be.lang_model.services.mcc2lm_imports import import_words
-from neves_be.word_lm.models import Logogram
 from neves_be.word_lm.models import Ngram
-from neves_be.word_lm.models import Radical
 from neves_be.word_lm.models import Sentence
 from neves_be.word_lm.models import Word
 
