@@ -22,7 +22,7 @@ def make_translation_model() -> Seq2SeqLMExportableModule:
 
 
 def generate_translation(txt: str) -> str:
-    if translation_model := GeneratedTranslation.objects.get(id=hash(txt)):
+    if translation_model := GeneratedTranslation.objects.filter(id=hash(txt)).first():
         return translation_model.output
 
     tokenizer = make_translation_tokenizer()

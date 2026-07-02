@@ -1284,6 +1284,8 @@ dependencies = [
     { name = "python-slugify" },
     { name = "qwen-tts" },
     { name = "redis" },
+    { name = "sentencepiece" },
+    { name = "tiktoken" },
     { name = "torch" },
     { name = "torchaudio" },
     { name = "transformers" },
@@ -1333,6 +1335,8 @@ requires-dist = [
     { name = "python-slugify", specifier = "==8.0.4" },
     { name = "qwen-tts", specifier = ">=0.1.1" },
     { name = "redis", specifier = "==8.0.0" },
+    { name = "sentencepiece", url = "https://files.pythonhosted.org/packages/04/88/14f2f4a2b922d8b39be45bf63d79e6cd3a9b2f248b2fcb98a69b12af12f5/sentencepiece-0.2.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl" },
+    { name = "tiktoken", url = "https://files.pythonhosted.org/packages/34/de/2ca96b07a82d972b74fe4b46de055b79c904e45c7eab699354a0bfa697dc/tiktoken-0.13.0-cp312-cp312-manylinux_2_28_x86_64.whl" },
     { name = "torch", url = "https://download-r2.pytorch.org/whl/cu130/torch-2.9.1%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl" },
     { name = "torchaudio", url = "https://download-r2.pytorch.org/whl/cu130/torchaudio-2.9.1%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl" },
     { name = "transformers", specifier = ">=4.57.3" },
@@ -2226,6 +2230,21 @@ wheels = [
 ]
 
 [[package]]
+name = "sentencepiece"
+version = "0.2.1"
+source = { url = "https://files.pythonhosted.org/packages/04/88/14f2f4a2b922d8b39be45bf63d79e6cd3a9b2f248b2fcb98a69b12af12f5/sentencepiece-0.2.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/88/14f2f4a2b922d8b39be45bf63d79e6cd3a9b2f248b2fcb98a69b12af12f5/sentencepiece-0.2.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0cdfecef430d985f1c2bcbfff3defd1d95dae876fbd0173376012d2d7d24044b" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "test", marker = "extra == 'testpaths'" },
+]
+provides-extras = ["test", "testpaths"]
+
+[[package]]
 name = "setuptools"
 version = "82.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2481,6 +2500,26 @@ sdist = { url = "https://files.pythonhosted.org/packages/b7/4d/08c89e34946fce2ae
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl", hash = "sha256:43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb", size = 18638, upload-time = "2025-03-13T13:49:21.846Z" },
 ]
+
+[[package]]
+name = "tiktoken"
+version = "0.13.0"
+source = { url = "https://files.pythonhosted.org/packages/34/de/2ca96b07a82d972b74fe4b46de055b79c904e45c7eab699354a0bfa697dc/tiktoken-0.13.0-cp312-cp312-manylinux_2_28_x86_64.whl" }
+dependencies = [
+    { name = "regex" },
+    { name = "requests" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/de/2ca96b07a82d972b74fe4b46de055b79c904e45c7eab699354a0bfa697dc/tiktoken-0.13.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:a116178fa7e1b4065bff05214360373a65cac22f965be7b3f73d00a0dbfe7649" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "blobfile", marker = "extra == 'blobfile'", specifier = ">=3" },
+    { name = "regex" },
+    { name = "requests" },
+]
+provides-extras = ["blobfile"]
 
 [[package]]
 name = "tokenizers"

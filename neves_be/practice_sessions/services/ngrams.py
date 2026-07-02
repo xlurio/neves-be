@@ -62,7 +62,12 @@ class NgramSessionFactory(BaseSessionFactory):
         if cached := self.__cache.get(self.get_session_ngrams_qs.__name__):
             return cached
 
-        not_learned_words = Word.objects.exclude(
+        most_common_word_ids = Word.objects.order_by("-occurrences")[:1000].values_list(
+            "pk",
+            flat=True,
+        )
+
+        not_learned_words = Word.objects.filter(pk__in=most_common_word_ids).exclude(
             **{  # noqa: PIE804
                 "word_ngrams__ngram__ngram_sessions__session__"
                 "in": self.__get_user_sessions(),
@@ -99,7 +104,7 @@ class NgramSessionFactory(BaseSessionFactory):
                 ngram_words__word__in=words_w_known_rads,
             )
             .exclude(ngram_sessions__session__in=self.__get_user_sessions())
-            .order_by("-occurrences")
+            .order_by("-occurrences", "-n_words")
         )  # type: ignore[misc]
 
         return self.__cache[self.get_session_ngrams_qs.__name__]

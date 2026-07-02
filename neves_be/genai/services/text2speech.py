@@ -23,7 +23,7 @@ def make_tts_model():
 
 
 def generate_speech(text: str) -> str:
-    if audio_model := GeneratedSpeech.objects.get(id=hash(text)):
+    if audio_model := GeneratedSpeech.objects.filter(id=hash(text)).first():
         return audio_model.audio.url
 
     wavs, sr = make_tts_model().generate_voice_clone(

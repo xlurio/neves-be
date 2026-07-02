@@ -13,11 +13,12 @@ services:
       - postgres
 
     volumes:
-      - ./neves_be:/app/neves_be
-      - ./config:/app/config
-      - ./tests:/app/tests
-      - ./mcc2lm.db:/app/mcc2lm.db
       - ./.env:/app/.env
+      - ./audio-cmn:/app/audio-cmn
+      - ./config:/app/config
+      - ./mcc2lm.db:/app/mcc2lm.db
+      - ./neves_be:/app/neves_be
+      - ./tests:/app/tests
 
     env_file:
       - .env
