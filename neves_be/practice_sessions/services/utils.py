@@ -13,7 +13,6 @@ from neves_be.practice_sessions.services.base import SentenceSessionAccessor
 from neves_be.practice_sessions.services.radicals import RadicalSessionFactory
 from neves_be.practice_sessions.services.sentences import SentenceSessionFactory
 from neves_be.practice_sessions.types import SessionType
-from neves_be.radical_sessions.models import RadicalSession
 from neves_be.sentence_sessions.models import SentenceSession
 from neves_be.sentence_sessions.types import SentencesStatistics
 from neves_be.users.models import User
@@ -60,10 +59,10 @@ def make_sentences_stats(request: Request) -> SentencesStatistics:
     )
 
     return {
-        "isUnlocked": RadicalSession.objects.filter(
-            user=request.user,
-            highest_score__gte=70,
-        ).exists(),
+        "isUnlocked": SentenceSessionFactory(request.user)
+        .get_session_sentences_qs()
+        .count()
+        >= SentenceSessionFactory.MIN_SENTENCES,
         "progress": Word.objects.filter(
             **{  # noqa: PIE804
                 "word_sentences__sentence__sentence_sessions__session__"

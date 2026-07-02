@@ -1,11 +1,14 @@
 from typing import Any
 
 from rest_framework import status
+from rest_framework.exceptions import APIException
 
 from neves_be.common.api import ErrorCode
 
 
-class NevesBackEndError(Exception):
+class NevesBackEndError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+
     def __init__(
         self,
         code: ErrorCode,
@@ -15,7 +18,8 @@ class NevesBackEndError(Exception):
         http_status: int = status.HTTP_400_BAD_REQUEST,
         payload: dict[str, Any] | None = None,
     ):
-        super().__init__(title)
+        super().__init__(title, code)
+
         self.__code = code
         self.__title = title
         self.__details = details
