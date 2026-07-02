@@ -9,5 +9,5 @@ urlpatterns = [
     path("", include("neves_be.practice_questions.urls")),
     path("", include("neves_be.practice_sessions.urls")),
     path("", include("neves_be.radical_sessions.urls")),
-    path("", include("neves_be.sentence_sessions.urls")),
+    path("", include("neves_be.ngram_sessions.urls")),
 ]

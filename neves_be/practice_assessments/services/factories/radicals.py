@@ -6,7 +6,7 @@ from typing import cast
 
 from django.db import transaction
 
-from neves_be.language_model.models import Radical
+from neves_be.char_lm.models import Radical
 from neves_be.practice_assessments.constants import ASSESSMENT_QUESTION_COUNT
 from neves_be.practice_assessments.constants import MINIMUM_ASSESSMENT_POOL_SIZE
 from neves_be.practice_assessments.exceptions import CreateRadicalSessionAssessmentError

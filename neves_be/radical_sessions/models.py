@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
-from neves_be.language_model.models import Radical
+from neves_be.char_lm.models import Radical
 from neves_be.practice_sessions.models import PracticeSession
 from neves_be.practice_sessions.models import PracticeSessionItem
 from neves_be.practice_sessions.models import PracticeSessionItemMeta

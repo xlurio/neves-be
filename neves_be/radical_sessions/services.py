@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.http import Http404
 
-from neves_be.language_model.models import LogogramWordMap
-from neves_be.language_model.models import Radical
-from neves_be.language_model.models import RadicalLogogramMap
-from neves_be.language_model.models import Word
+from neves_be.char_lm.models import Radical
+from neves_be.char_lm.models import RadicalLogogramMap
 from neves_be.radical_sessions.models import RadicalSession
 from neves_be.radical_sessions.models import RadicalSessionRadical
+from neves_be.word_lm.models import LogogramWordMap
+from neves_be.word_lm.models import Word
 
 if TYPE_CHECKING:
     from rest_framework.request import Request

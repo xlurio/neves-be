@@ -7,8 +7,8 @@ from rest_framework import serializers
 from rest_framework.fields import Field
 
 from neves_be.common.serializers import CamelCaseAliasSerializerMixin
+from neves_be.practice_assessments.models import NgramSessionAssessment
 from neves_be.practice_assessments.models import RadicalSessionAssessment
-from neves_be.practice_assessments.models import SentenceSessionAssessment
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestion
 from neves_be.practice_sessions.types import SessionType
 
@@ -30,7 +30,7 @@ class RadicalSessionAssessmentSerializer(
         return self._rename_camel_case_fields(fields)
 
 
-class SentenceSessionAssessmentSerializer(
+class NgramSessionAssessmentSerializer(
     CamelCaseAliasSerializerMixin,
     serializers.ModelSerializer,
 ):
@@ -39,7 +39,7 @@ class SentenceSessionAssessmentSerializer(
     }
 
     class Meta:
-        model = SentenceSessionAssessment
+        model = NgramSessionAssessment
         fields = ["id", "finished_at", "score"]
 
     def get_fields(self) -> MutableMapping[str, Field]:
@@ -53,8 +53,8 @@ def make_practice_assessment_srlr_cls(
     if session_type == "radicals":
         return RadicalSessionAssessmentSerializer
 
-    if session_type == "sentences":
-        return SentenceSessionAssessmentSerializer
+    if session_type == "ngrams":
+        return NgramSessionAssessmentSerializer
 
     assert_never(session_type)
 

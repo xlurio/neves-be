@@ -1311,9 +1311,6 @@ dev = [
     { name = "sphinx-autobuild" },
     { name = "werkzeug", extra = ["watchdog"] },
 ]
-mining = [
-    { name = "scikit-learn" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -1363,7 +1360,6 @@ dev = [
     { name = "sphinx-autobuild", specifier = "==2025.8.25" },
     { name = "werkzeug", extras = ["watchdog"], specifier = "==3.1.8" },
 ]
-mining = [{ name = "scikit-learn", specifier = ">=1.9.0" }]
 
 [[package]]
 name = "nodeenv"

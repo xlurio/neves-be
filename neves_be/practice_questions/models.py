@@ -6,15 +6,15 @@ from typing import NewType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from neves_be.practice_assessments.models import NgramSessionAssessment
 from neves_be.practice_assessments.models import PracticeSessionAssessment
 from neves_be.practice_assessments.models import RadicalSessionAssessment
-from neves_be.practice_assessments.models import SentenceSessionAssessment
 
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
+    from neves_be.practice_assessments.types import NgramSessionAssessmentId
     from neves_be.practice_assessments.types import RadicalSessionAssessmentId
-    from neves_be.practice_assessments.types import SentenceSessionAssessmentId
 
 
 class PracticeSessionAssessmentQuestionAnswer(models.TextChoices):
@@ -127,41 +127,41 @@ class RadicalSessionAssessmentQuestionAlt(PracticeSessionAssessmentQuestionAlt):
         ]
 
 
-class SentenceSessionQuestionType(models.TextChoices):
-    SENTENCE_AUDIO_TO_WORD_AUDIO = (
-        "SENTENCE-AUDIO-TO-WORD-AUDIO",
-        _("Sentence Audio to Word Audio"),
+class NgramSessionQuestionType(models.TextChoices):
+    NGRAM_AUDIO_TO_WORD_AUDIO = (
+        "NGRAM-AUDIO-TO-WORD-AUDIO",
+        _("Ngram Audio to Word Audio"),
     )
-    SENTENCE_TEXT_TO_WORD_AUDIO = (
-        "SENTENCE-TEXT-TO-WORD-AUDIO",
-        _("Sentence Text to Word Audio"),
+    NGRAM_TEXT_TO_WORD_AUDIO = (
+        "NGRAM-TEXT-TO-WORD-AUDIO",
+        _("Ngram Text to Word Audio"),
     )
-    SENTENCE_AUDIO_TO_WORD_TEXT = (
-        "SENTENCE-AUDIO-TO-WORD-TEXT",
-        _("Sentence Audio to Word Text"),
+    NGRAM_AUDIO_TO_WORD_TEXT = (
+        "NGRAM-AUDIO-TO-WORD-TEXT",
+        _("Ngram Audio to Word Text"),
     )
-    SENTENCE_TEXT_TO_WORD_TEXT = (
-        "SENTENCE-TEXT-TO-WORD-TEXT",
-        _("Sentence Text to Word Text"),
+    NGRAM_TEXT_TO_WORD_TEXT = (
+        "NGRAM-TEXT-TO-WORD-TEXT",
+        _("Ngram Text to Word Text"),
     )
     LOGOGRAM_TO_RADICALS = "LOGOGRAM-TO-RADICALS", _("Logogram to Radicals")
 
 
-class SentenceSessionAssessmentQuestion(PracticeSessionAssessmentQuestion):
+class NgramSessionAssessmentQuestion(PracticeSessionAssessmentQuestion):
     assessment = models.ForeignKey(
-        SentenceSessionAssessment,
+        NgramSessionAssessment,
         on_delete=models.CASCADE,
         related_name="questions",
     )
-    assessment_id: SentenceSessionAssessmentId
-    type = models.CharField(max_length=32, choices=SentenceSessionQuestionType)
+    assessment_id: NgramSessionAssessmentId
+    type = models.CharField(max_length=32, choices=NgramSessionQuestionType)
 
     class Meta:
         ordering = ["assessment", "number"]
         constraints = [
             models.UniqueConstraint(
                 fields=["assessment", "number"],
-                name="uniq_sentence_assessment_question_number",
+                name="uniq_ngram_assessment_question_number",
             ),
         ]
 
@@ -169,9 +169,9 @@ class SentenceSessionAssessmentQuestion(PracticeSessionAssessmentQuestion):
         return f"{self.assessment_id}:{self.number}"
 
 
-class SentenceSessionAssessmentQuestionAlt(PracticeSessionAssessmentQuestionAlt):
+class NgramSessionAssessmentQuestionAlt(PracticeSessionAssessmentQuestionAlt):
     question = models.ForeignKey(
-        SentenceSessionAssessmentQuestion,
+        NgramSessionAssessmentQuestion,
         on_delete=models.CASCADE,
         related_name="question_alternatives",
     )
@@ -181,11 +181,11 @@ class SentenceSessionAssessmentQuestionAlt(PracticeSessionAssessmentQuestionAlt)
         constraints = [
             models.UniqueConstraint(
                 fields=["letter", "question"],
-                name="sentence_uniq_letter_question",
+                name="ngram_uniq_letter_question",
             ),
         ]
 
 
 type ConcretePracticeSessionAssessmentQuestion = (
-    RadicalSessionAssessmentQuestion | SentenceSessionAssessmentQuestion
+    RadicalSessionAssessmentQuestion | NgramSessionAssessmentQuestion
 )

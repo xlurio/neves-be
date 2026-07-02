@@ -59,9 +59,6 @@ dev = [
   "sphinx-autobuild==2025.8.25",
   "werkzeug[watchdog]==3.1.8",
 ]
-mining = [
-  "scikit-learn>=1.9.0",
-]
 
 [tool.uv]
 sources.flash-attn = { url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu13torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl" }

@@ -4,8 +4,8 @@ from typing import Literal
 from typing import NewType
 from uuid import UUID
 
+from neves_be.practice_assessments.models import NgramSessionAssessment
 from neves_be.practice_assessments.models import RadicalSessionAssessment
-from neves_be.practice_assessments.models import SentenceSessionAssessment
 
 RadicalSessionAssessmentId = NewType("RadicalSessionAssessmentId", UUID)
 
@@ -19,35 +19,33 @@ type RadicalAssessmentQuestionType = Literal[
 ]
 
 
-SentenceSessionAssessmentId = NewType("SentenceSessionAssessmentId", UUID)
+NgramSessionAssessmentId = NewType("NgramSessionAssessmentId", UUID)
 
-type SentenceAssessmentQuestionType = Literal[
-    "SENTENCE-AUDIO-TO-WORD-AUDIO",
-    "SENTENCE-TEXT-TO-WORD-AUDIO",
-    "SENTENCE-AUDIO-TO-WORD-TEXT",
-    "SENTENCE-TEXT-TO-WORD-TEXT",
+type NgramAssessmentQuestionType = Literal[
+    "NGRAM-AUDIO-TO-WORD-AUDIO",
+    "NGRAM-TEXT-TO-WORD-AUDIO",
+    "NGRAM-AUDIO-TO-WORD-TEXT",
+    "NGRAM-TEXT-TO-WORD-TEXT",
     "LOGOGRAM-TO-RADICALS",
 ]
 
 
-type PracticeSessionAssessmentId = (
-    RadicalSessionAssessmentId | SentenceSessionAssessmentId
-)
+type PracticeSessionAssessmentId = RadicalSessionAssessmentId | NgramSessionAssessmentId
 type ConcretePracticeSessionAssessment = (
-    RadicalSessionAssessment | SentenceSessionAssessment
+    RadicalSessionAssessment | NgramSessionAssessment
 )
 
-type AssessmentType = Literal["radicals", "sentences"]
+type AssessmentType = Literal["radicals", "ngrams"]
 
 type AnswerChoice = Literal["a", "b", "c", "d", "e"]
 type CurrentAnswer = AnswerChoice | Literal[""]
 
 
 type ConcretePracticeAssessmentQuestionType = (
-    RadicalAssessmentQuestionType | SentenceAssessmentQuestionType
+    RadicalAssessmentQuestionType | NgramAssessmentQuestionType
 )
 
 
 type ConcreteAssessmentQuestionType = (
-    RadicalAssessmentQuestionType | SentenceAssessmentQuestionType
+    RadicalAssessmentQuestionType | NgramAssessmentQuestionType
 )

@@ -8,8 +8,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from neves_be.language_model.models import Radical
-from neves_be.language_model.serializers import RadicalSerializer
+from neves_be.char_lm.models import Radical
+from neves_be.char_lm.serializers import RadicalSerializer
 from neves_be.practice_sessions.services.utils import make_session_getter
 from neves_be.practice_sessions.views import DefaultPagination
 from neves_be.radical_sessions.services import add_radical_to_session

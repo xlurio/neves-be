@@ -13,6 +13,9 @@ import_mcc2lm:
 logsdjango:
 	$(dockercompose) logs -fn200 django
 
+logspostgres:
+	$(dockercompose) logs -fn200 postgres
+
 migrate:
 	$(dockercompose) run --rm django sh -c 'python manage.py migrate'
 

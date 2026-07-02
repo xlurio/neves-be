@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
+from neves_be.ngram_sessions.models import NgramSession
 from neves_be.radical_sessions.models import RadicalSession
-from neves_be.sentence_sessions.models import SentenceSession
 
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
+    from neves_be.practice_questions.models import NgramSessionAssessmentQuestion
     from neves_be.practice_questions.models import RadicalSessionAssessmentQuestion
-    from neves_be.practice_questions.models import SentenceSessionAssessmentQuestion
     from neves_be.practice_sessions.models import PracticeSession
 
 
@@ -45,13 +45,13 @@ class RadicalSessionAssessment(PracticeSessionAssessment):
         ordering = ["-finished_at", "id"]
 
 
-class SentenceSessionAssessment(PracticeSessionAssessment):
-    session: models.ForeignKey[SentenceSession, SentenceSession] = models.ForeignKey(
-        SentenceSession,
+class NgramSessionAssessment(PracticeSessionAssessment):
+    session: models.ForeignKey[NgramSession, NgramSession] = models.ForeignKey(
+        NgramSession,
         on_delete=models.CASCADE,
         related_name="assessments",
     )
-    questions: RelatedManager[SentenceSessionAssessmentQuestion]
+    questions: RelatedManager[NgramSessionAssessmentQuestion]
 
     class Meta:
         ordering = ["-finished_at", "id"]

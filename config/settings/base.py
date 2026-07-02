@@ -82,12 +82,15 @@ REST_FRAMEWORK = {
 }
 
 LOCAL_APPS = [
-    "neves_be.language_model.apps.LanguageModelConfig",
+    "neves_be.genai.apps.GenaiConfig",
+    "neves_be.lang_model.apps.LangModelConfig",
+    "neves_be.char_lm.apps.CharLmConfig",
+    "neves_be.word_lm.apps.WordLmConfig",
     "neves_be.practice_assessments.apps.PracticeAssessmentsConfig",
     "neves_be.practice_questions.apps.PracticeQuestionsConfig",
     "neves_be.practice_sessions.apps.PracticeSessionsConfig",
     "neves_be.radical_sessions.apps.RadicalSessionsConfig",
-    "neves_be.sentence_sessions.apps.SentenceSessionsConfig",
+    "neves_be.ngram_sessions.apps.NgramSessionsConfig",
     "neves_be.users",
 ]
 

@@ -4,10 +4,10 @@ from django.db import models
 from django.http import Http404
 from rest_framework.request import Request
 
+from neves_be.ngram_sessions.models import NgramSession
 from neves_be.practice_sessions.types import ConcretePracticeSession
 from neves_be.practice_sessions.types import ConcretePracticeSessionId
 from neves_be.radical_sessions.models import RadicalSession
-from neves_be.sentence_sessions.models import SentenceSession
 from neves_be.users.models import User
 
 
@@ -41,10 +41,10 @@ class RadicalSessionAccessor(BasePracticeSessionAccessor):
     ITEMS_RELATED_NAME = "session_radicals"
 
 
-class SentenceSessionAccessor(BasePracticeSessionAccessor):
-    SESSION_TYPE = SentenceSession
-    NOT_FOUND_MSG = "Sentence session not found."
-    ITEMS_RELATED_NAME = "session_sentences"
+class NgramSessionAccessor(BasePracticeSessionAccessor):
+    SESSION_TYPE = NgramSession
+    NOT_FOUND_MSG = "Ngram session not found."
+    ITEMS_RELATED_NAME = "session_ngrams"
 
 
 class BaseSessionFactory(abc.ABC):

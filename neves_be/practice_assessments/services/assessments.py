@@ -4,8 +4,8 @@ from typing import assert_never
 from django.http import Http404
 from rest_framework.request import Request
 
+from neves_be.practice_assessments.models import NgramSessionAssessment
 from neves_be.practice_assessments.models import RadicalSessionAssessment
-from neves_be.practice_assessments.models import SentenceSessionAssessment
 from neves_be.practice_assessments.types import AssessmentType
 from neves_be.practice_assessments.types import ConcretePracticeSessionAssessment
 from neves_be.practice_assessments.types import PracticeSessionAssessmentId
@@ -43,9 +43,9 @@ class RadicalAssessmentAccessor(BaseAssessmentAccessor):
     ASSESSMENT_TYPE = RadicalSessionAssessment
 
 
-class SentenceAssessmentAccessor(BaseAssessmentAccessor):
-    NOT_FOUND_ERROR_MSG = "Sentence test not found."
-    ASSESSMENT_TYPE = SentenceSessionAssessment
+class NgramAssessmentAccessor(BaseAssessmentAccessor):
+    NOT_FOUND_ERROR_MSG = "Ngram test not found."
+    ASSESSMENT_TYPE = NgramSessionAssessment
 
 
 def make_assessment_getter(
@@ -55,8 +55,8 @@ def make_assessment_getter(
     if assessment_type == "radicals":
         return RadicalAssessmentAccessor(user)
 
-    if assessment_type == "sentences":
-        return SentenceAssessmentAccessor(user)
+    if assessment_type == "ngrams":
+        return NgramAssessmentAccessor(user)
 
     assert_never(assessment_type)
 

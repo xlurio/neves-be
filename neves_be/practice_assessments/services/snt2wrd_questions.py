@@ -5,38 +5,38 @@ from typing import TYPE_CHECKING
 from typing import TypedDict
 from typing import assert_never
 
-from neves_be.language_model.models import Sentence
-from neves_be.language_model.models import Word
-from neves_be.language_model.services.text2speech import generate_speech
+from neves_be.genai.services.text2speech import generate_speech
 from neves_be.practice_assessments.constants import MASK_TOKEN
 from neves_be.practice_assessments.services.questions import AlternativesSetup
 from neves_be.practice_assessments.services.questions import BasePracticeQuestionFactory
 from neves_be.practice_assessments.services.questions import PracticeQuestionSetup
+from neves_be.practice_questions.models import NgramSessionAssessmentQuestion
+from neves_be.practice_questions.models import NgramSessionAssessmentQuestionAlt
 from neves_be.practice_questions.models import PracticeAssessmentAlternativeTypeChoices
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
-from neves_be.practice_questions.models import SentenceSessionAssessmentQuestion
-from neves_be.practice_questions.models import SentenceSessionAssessmentQuestionAlt
+from neves_be.word_lm.models import Ngram
+from neves_be.word_lm.models import Word
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from neves_be.practice_assessments.models import PracticeSessionAssessment
-    from neves_be.practice_assessments.types import SentenceAssessmentQuestionType
+    from neves_be.practice_assessments.types import NgramAssessmentQuestionType
 
 
-class Sentence2WordQuestionSetup(TypedDict):
+class Ngram2WordQuestionSetup(TypedDict):
     audio: str
     selected_word: Word
     question_txt: str
 
 
-class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
+class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
     def __init__(
         self,
-        sentence: Sentence,
-        question_type: SentenceAssessmentQuestionType,
+        ngram: Ngram,
+        question_type: NgramAssessmentQuestionType,
     ) -> None:
-        self.__sentence = sentence
+        self.__ngram = ngram
         self.__question_type = question_type
 
     def _setup_question(
@@ -44,8 +44,8 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
         assessment: PracticeSessionAssessment,
         question_num: int,
     ) -> PracticeQuestionSetup:
-        question_setup = self.__setup_snt_2_wrd_question(
-            self.__sentence,
+        question_setup = self.__setup_ngr_2_wrd_question(
+            self.__ngram,
             self.__question_type,
         )
         question_word = question_setup["selected_word"]
@@ -56,7 +56,7 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
             self.__question_type,
         )
 
-        question = SentenceSessionAssessmentQuestion.objects.create(
+        question = NgramSessionAssessmentQuestion.objects.create(
             assessment=assessment,
             expected_answer=alts_stp["correct_answer"],
             number=question_num,
@@ -69,34 +69,34 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
             alternatives=alts_stp["alternatives"],
         )
 
-    def __setup_snt_2_wrd_question(
+    def __setup_ngr_2_wrd_question(
         self,
-        sentence: Sentence,
-        question_type: SentenceAssessmentQuestionType,
-    ) -> Sentence2WordQuestionSetup:
+        ngram: Ngram,
+        question_type: NgramAssessmentQuestionType,
+    ) -> Ngram2WordQuestionSetup:
         selected_word = random.choice(
-            Word.objects.filter(word_sentences__sentence=sentence),
+            Word.objects.filter(word_ngrams__ngram=ngram),
         )
-        processed_sentence = sentence.value.replace(selected_word.value, MASK_TOKEN)
+        processed_ngram = ngram.value.replace(selected_word.value, MASK_TOKEN)
         audio = ""
 
         if question_type in {
-            "SENTENCE-AUDIO-TO-WORD-AUDIO",
-            "SENTENCE-AUDIO-TO-WORD-TEXT",
+            "NGRAM-AUDIO-TO-WORD-AUDIO",
+            "NGRAM-AUDIO-TO-WORD-TEXT",
         }:
             question_txt = "What word is missing in the following audio?"
             audio = generate_speech(question_txt)
         elif question_type in {
-            "SENTENCE-TEXT-TO-WORD-AUDIO",
-            "SENTENCE-TEXT-TO-WORD-TEXT",
+            "NGRAM-TEXT-TO-WORD-AUDIO",
+            "NGRAM-TEXT-TO-WORD-TEXT",
         }:
             question_txt = (
-                f"What word is missing in the following sentence?\n{processed_sentence}"
+                f"What word is missing in the following ngram?\n{processed_ngram}"
             )
         else:
             assert_never(question_type)  # type: ignore[arg-type]
 
-        return Sentence2WordQuestionSetup(
+        return Ngram2WordQuestionSetup(
             audio=audio,
             selected_word=selected_word,
             question_txt=question_txt,
@@ -117,11 +117,11 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
         self,
         question_word: Word,
         selected_words: Sequence[Word],
-        question_type: SentenceAssessmentQuestionType,
+        question_type: NgramAssessmentQuestionType,
     ) -> AlternativesSetup:
         correct_answer = PracticeSessionAssessmentQuestionAnswer.A
         alt_letters = list(PracticeSessionAssessmentQuestionAnswer)
-        alternatives: list[SentenceSessionAssessmentQuestionAlt] = []
+        alternatives: list[NgramSessionAssessmentQuestionAlt] = []
         alternative_type = self.__get_alt_type_by_question_type(question_type)
 
         for ltt_idx, curr_word in enumerate(selected_words):
@@ -129,7 +129,7 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
                 correct_answer = alt_letters[ltt_idx]
 
             alternatives.append(
-                SentenceSessionAssessmentQuestionAlt(
+                NgramSessionAssessmentQuestionAlt(
                     letter=alt_letters[ltt_idx],
                     type=alternative_type,
                     payload=self.__get_word_alt_payload_for_type(
@@ -146,17 +146,17 @@ class Sentence2WordQuestionFactory(BasePracticeQuestionFactory):
 
     def __get_alt_type_by_question_type(
         self,
-        question_type: SentenceAssessmentQuestionType,
+        question_type: NgramAssessmentQuestionType,
     ) -> PracticeAssessmentAlternativeTypeChoices:
         if question_type in {
-            "SENTENCE-AUDIO-TO-WORD-AUDIO",
-            "SENTENCE-TEXT-TO-WORD-AUDIO",
+            "NGRAM-AUDIO-TO-WORD-AUDIO",
+            "NGRAM-TEXT-TO-WORD-AUDIO",
         }:
             return PracticeAssessmentAlternativeTypeChoices.AUDIO
 
         if question_type in {
-            "SENTENCE-AUDIO-TO-WORD-TEXT",
-            "SENTENCE-TEXT-TO-WORD-TEXT",
+            "NGRAM-AUDIO-TO-WORD-TEXT",
+            "NGRAM-TEXT-TO-WORD-TEXT",
         }:
             return PracticeAssessmentAlternativeTypeChoices.TEXT
 

@@ -11,12 +11,20 @@ services:
     container_name: neves_be_local_django
     depends_on:
       - postgres
+
     volumes:
-      - .:/app:z
+      - ./neves_be:/app/neves_be
+      - ./config:/app/config
+      - ./tests:/app/tests
+      - ./mcc2lm.db:/app/mcc2lm.db
+      - ./.env:/app/.env
+
     env_file:
       - .env
+
     ports:
       - "8000:8000"
+
     command: /start
     deploy:
       resources:
@@ -34,7 +42,7 @@ services:
     volumes:
       - neves_be_local_postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      test: ["CMD-SHELL", "pg_isready", "-d", "neves-be"]
       interval: 30s
       timeout: 60s
       retries: 5

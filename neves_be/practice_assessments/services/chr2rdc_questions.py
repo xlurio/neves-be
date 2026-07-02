@@ -3,19 +3,19 @@ from collections import defaultdict
 from collections.abc import Sequence
 from typing import cast
 
-from neves_be.language_model.models import Logogram
-from neves_be.language_model.models import Radical
-from neves_be.language_model.models import RadicalLogogramMap
-from neves_be.language_model.types import LogogramId
+from neves_be.char_lm.models import Radical
+from neves_be.char_lm.models import RadicalLogogramMap
+from neves_be.ngram_sessions.models import NgramSession
 from neves_be.practice_assessments.models import PracticeSessionAssessment
 from neves_be.practice_assessments.services.questions import AlternativesSetup
 from neves_be.practice_assessments.services.questions import BasePracticeQuestionFactory
 from neves_be.practice_assessments.services.questions import PracticeQuestionSetup
+from neves_be.practice_questions.models import NgramSessionAssessmentQuestion
+from neves_be.practice_questions.models import NgramSessionAssessmentQuestionAlt
 from neves_be.practice_questions.models import PracticeAssessmentAlternativeTypeChoices
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
-from neves_be.practice_questions.models import SentenceSessionAssessmentQuestion
-from neves_be.practice_questions.models import SentenceSessionAssessmentQuestionAlt
-from neves_be.sentence_sessions.models import SentenceSession
+from neves_be.word_lm.models import Logogram
+from neves_be.word_lm.types import LogogramId
 
 
 class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
@@ -31,7 +31,7 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
             selected_logograms,
         )
 
-        question = SentenceSessionAssessmentQuestion.objects.create(
+        question = NgramSessionAssessmentQuestion.objects.create(
             number=question_num,
             question=self.__make_chr_2_rdcs_txt(question_logogram),
             expected_answer=alts_stp["correct_answer"],
@@ -43,12 +43,12 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
             alternatives=alts_stp["alternatives"],
         )
 
-    def __select_logograms(self, session: SentenceSession) -> Sequence[Logogram]:
+    def __select_logograms(self, session: NgramSession) -> Sequence[Logogram]:
         avlbl_logograms = list(
             Logogram.objects.filter(
                 **{  # noqa: PIE804
-                    "logogram_words__word__word_sentences__sentence__"
-                    "sentence_sessions__session__user": session.user,
+                    "logogram_words__word__word_ngrams__ngram__"
+                    "ngram_sessions__session__user": session.user,
                 },
             ),
         )
@@ -65,7 +65,7 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
     ) -> AlternativesSetup:
         correct_answer = PracticeSessionAssessmentQuestionAnswer.A
         alt_letters = list(PracticeSessionAssessmentQuestionAnswer)
-        alternatives: list[SentenceSessionAssessmentQuestionAlt] = []
+        alternatives: list[NgramSessionAssessmentQuestionAlt] = []
         lgg_rdcs_mapping = self.__make_lgg_rdcs_mapping(selected_logograms)
 
         for ltt_idx, curr_char in enumerate(selected_logograms):
@@ -73,7 +73,7 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
                 correct_answer = alt_letters[ltt_idx]
 
             alternatives.append(
-                SentenceSessionAssessmentQuestionAlt(
+                NgramSessionAssessmentQuestionAlt(
                     letter=alt_letters[ltt_idx],
                     type=PracticeAssessmentAlternativeTypeChoices.TEXT,
                     payload=" ".join(

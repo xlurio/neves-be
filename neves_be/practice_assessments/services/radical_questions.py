@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from rest_framework.request import Request
 
-    from neves_be.language_model.models import Radical
+    from neves_be.char_lm.models import Radical
     from neves_be.practice_assessments.models import RadicalSessionAssessment
     from neves_be.practice_assessments.types import RadicalAssessmentQuestionType
 

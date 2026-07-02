@@ -41,11 +41,11 @@ class RadicalSessionSerializer(PracticeSessionSerializer):
     }
 
 
-class SentenceSessionSerializer(PracticeSessionSerializer):
-    num_of_sentences = serializers.IntegerField(read_only=True)
+class NgramSessionSerializer(PracticeSessionSerializer):
+    num_of_ngrams = serializers.IntegerField(read_only=True)
 
     camel_case_aliases = {
         "created_at": "createdAt",
-        "num_of_sentences": "numOfSentences",
+        "num_of_ngrams": "numOfNgrams",
         "highest_score": "highestScore",
     }

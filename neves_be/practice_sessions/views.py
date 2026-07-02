@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from neves_be.practice_sessions.services.utils import make_sentences_stats
+from neves_be.practice_sessions.services.utils import make_ngrams_stats
 from neves_be.practice_sessions.services.utils import make_session_factory
 from neves_be.practice_sessions.services.utils import make_session_getter
 from neves_be.practice_sessions.services.utils import make_session_serializer
@@ -34,7 +34,7 @@ def stats_me_view(request: Request) -> Response:
         {
             "username": cast("User", request.user).username,
             "radicals": make_radicals_stats(request),
-            "sentences": make_sentences_stats(request),
+            "ngrams": make_ngrams_stats(request),
         },
     )
 
