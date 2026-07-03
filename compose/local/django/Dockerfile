@@ -65,8 +65,8 @@ COPY ./compose/local/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-COPY ./compose/local/celery/start /start
+COPY ./compose/local/celery/start /startworker
 RUN sed -i 's/\r$//g' /startworker
-RUN chmod +x /start
+RUN chmod +x /startworker
 
 ENTRYPOINT ["/entrypoint"]

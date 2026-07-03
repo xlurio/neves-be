@@ -15,13 +15,16 @@ class BasePracticeSessionAccessor:
     SESSION_TYPE: type[ConcretePracticeSession]
     NOT_FOUND_MSG: str
     ITEMS_RELATED_NAME: str
+    TOTAL_ITEMS_FIELD: str
 
     def __init__(self, user: User) -> None:
         self.__user = user
 
     def get_sessions(self) -> models.QuerySet[ConcretePracticeSession]:
         return self.SESSION_TYPE.objects.annotate(
-            total_items=models.Count(self.ITEMS_RELATED_NAME),
+            **{
+                self.TOTAL_ITEMS_FIELD: models.Count(self.ITEMS_RELATED_NAME),
+            },
         ).filter(user=self.__user)
 
     def get_session(
@@ -39,12 +42,14 @@ class RadicalSessionAccessor(BasePracticeSessionAccessor):
     SESSION_TYPE = RadicalSession
     NOT_FOUND_MSG = "Radical session not found."
     ITEMS_RELATED_NAME = "session_radicals"
+    TOTAL_ITEMS_FIELD = "num_of_radicals"
 
 
 class NgramSessionAccessor(BasePracticeSessionAccessor):
     SESSION_TYPE = NgramSession
     NOT_FOUND_MSG = "Ngram session not found."
     ITEMS_RELATED_NAME = "session_ngrams"
+    TOTAL_ITEMS_FIELD = "num_of_ngrams"
 
 
 class BaseSessionFactory(abc.ABC):

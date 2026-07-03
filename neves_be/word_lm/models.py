@@ -10,8 +10,10 @@ if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
     from neves_be.ngram_sessions.models import NgramSessionNgram
+    from neves_be.word_lm.types import LogogramId
     from neves_be.word_lm.types import NgramId
     from neves_be.word_lm.types import SentenceId
+    from neves_be.word_lm.types import WordId
 
 
 class Word(models.Model):
@@ -37,7 +39,9 @@ class LogogramWordMap(models.Model):
         on_delete=models.CASCADE,
         related_name="word_logograms",
     )
+    word_id: WordId
     logogram = models.ForeignKey(Logogram, on_delete=models.CASCADE)
+    logogram_id: LogogramId
 
     class Meta:
         constraints = [

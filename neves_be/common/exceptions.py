@@ -45,3 +45,6 @@ class NevesBackEndError(APIException):
     @property
     def payload(self) -> dict[str, Any] | None:
         return self.__payload
+
+
+class AsyncOperationError(NevesBackEndError): ...

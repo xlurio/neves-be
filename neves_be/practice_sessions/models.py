@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
 
+from neves_be.common.models import UUIDPkModelMixin
+
 if TYPE_CHECKING:
     from neves_be.users.models import User
 
 
-class PracticeSession(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class PracticeSession(UUIDPkModelMixin, models.Model):
     user: models.ForeignKey[User, User | None] = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -31,7 +31,7 @@ class PracticeSessionMeta:
     ordering = ("-created_at",)
 
 
-class PracticeSessionItem(models.Model):
+class PracticeSessionItem(UUIDPkModelMixin, models.Model):
     position = models.PositiveIntegerField(default=0)
 
     class Meta:

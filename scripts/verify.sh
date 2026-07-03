@@ -10,6 +10,6 @@ set -xe
     --ignore-paths '.*/migrations/.*' .
 caustin --suffix '.py' --exclude='.venv' --exclude='manage.py' \
     --exclude='tests' --exclude='**/migrations/*.py' --exclude='config' \
-    --exclude='qwen_3_tts_helper.py'
+    --exclude='qwen_3_tts_helper.py' --max-lines 250
 git add . && .venv/bin/pre-commit run --all
 docker compose -f docker-compose.local.yml run --rm django sh -c 'pytest'

@@ -43,9 +43,11 @@ class RadicalSessionSerializer(PracticeSessionSerializer):
 
 class NgramSessionSerializer(PracticeSessionSerializer):
     num_of_ngrams = serializers.IntegerField(read_only=True)
+    is_ready = serializers.BooleanField(read_only=True, default=True)
 
     camel_case_aliases = {
         "created_at": "createdAt",
+        "is_ready": "isReady",
         "num_of_ngrams": "numOfNgrams",
         "highest_score": "highestScore",
     }

@@ -14,7 +14,7 @@ from neves_be.genai.models import GeneratedTranslation
 CHINESE_CHAR_PATTERN = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]")
 EXTRA_TOKEN_PATTERN = re.compile(r"[<]extra_id_[0-9]+[>]")
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 @functools.cache
@@ -74,11 +74,13 @@ def generate_translation(txt: str) -> str:
     if translation_model := GeneratedTranslation.objects.filter(id=hash(txt)).first():
         if _is_valid_translation(translation_model.output):
             return translation_model.output
-        logger.warning(
+        _logger.warning(
             "Dropping cached translation with invalid output",
             extra={"translation_id": translation_model.id},
         )
         translation_model.delete()
+
+    _logger.info("No translation was found for '%s', generating a new one", txt)
 
     source_langs = tuple(settings.GENAI_TRANSLATION_SOURCE_LANGS)
     if not source_langs:
@@ -107,7 +109,7 @@ def generate_translation(txt: str) -> str:
             return translation_model.output
 
         invalid_outputs.append(f"{source_lang}: {output!r}")
-        logger.warning(
+        _logger.warning(
             "Translation output failed quality checks",
             extra={"source_lang": source_lang, "output": output},
         )
