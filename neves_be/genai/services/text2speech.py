@@ -1,27 +1,27 @@
 from __future__ import annotations
 
 import functools
+import pathlib
 import tempfile
 
 import soundfile as sf
-import torch
 from django.core.files.base import File
-from qwen_tts import Qwen3TTSModel
+from django.db import transaction
 
 from neves_be.genai.models import GeneratedSpeech
+from neves_be.genai.services.qwen_3_tts_helper import OVQwen3TTSModel
 from neves_be.practice_assessments.constants import MASK_TOKEN
 
 
 @functools.cache
 def make_tts_model():
-    return Qwen3TTSModel.from_pretrained(
-        "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
-        device_map="cuda:0",
-        dtype=torch.bfloat16,
-        attn_implementation="flash_attention_2",
-    )
+    assert pathlib.Path(
+        "/app/Qwen3-TTS-INT8-OV/speech_tokenizer/model.safetensors",
+    ).is_file()
+    return OVQwen3TTSModel.from_pretrained("/app/Qwen3-TTS-INT8-OV", device="CPU")
 
 
+@transaction.atomic
 def generate_speech(text: str) -> str:
     if audio_model := GeneratedSpeech.objects.filter(id=hash(text)).first():
         return audio_model.audio.url
@@ -33,10 +33,12 @@ def generate_speech(text: str) -> str:
         ref_text="甚至出现交易几乎停滞的情况。",
     )
 
-    audio_model = GeneratedSpeech.objects.create(id=hash(text))
+    audio_model, _ = GeneratedSpeech.objects.get_or_create(id=hash(text))
 
-    with tempfile.NamedTemporaryFile("w+") as audio_file:
+    with tempfile.NamedTemporaryFile("w+b", suffix=".wav") as audio_file:
         sf.write(audio_file.name, wavs[0], sr)
-        audio_model.audio.save(content=File(audio_file))
+        audio_model.audio.save(f"speech_{audio_model.id}.wav", content=File(audio_file))
+
+    assert audio_model.audio.name
 
     return audio_model.audio.url

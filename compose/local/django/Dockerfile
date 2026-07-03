@@ -28,9 +28,9 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_6
 
 # Requirements are installed here to ensure they will be cached.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=uv.lock,target=uv.lock:rw \
-    uv sync --no-install-project --dev
+  --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+  --mount=type=bind,source=uv.lock,target=uv.lock:rw \
+  uv sync --no-install-project --dev
 
 COPY ./manage.py /app/manage.py
 COPY ./README.md /app/README.md
@@ -41,9 +41,19 @@ COPY ./neves_be /app/neves_be
 COPY ./tests /app/tests
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=uv.lock,target=uv.lock:rw \
-    uv sync
+  --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+  --mount=type=bind,source=uv.lock,target=uv.lock:rw \
+  uv sync
+
+RUN uv run optimum-cli export openvino --model facebook/nllb-200-distilled-600M \
+  --task text2text-generation-with-past --weight-format int8 ov_nllb_model_int8
+
+RUN uv run huggingface-cli download Echo9Zulu/Qwen3-TTS-12Hz-Base-1.7B-INT8-OpenVINO \
+  --local-dir ./Qwen3-TTS-INT8-OV
+
+RUN cd /app/Qwen3-TTS-INT8-OV/speech_tokenizer && \
+  wget https://huggingface.co/Qwen/Qwen3-TTS-Tokenizer-12Hz/resolve/main/model.safetensors \
+  && cd /app
 
 # devcontainer dependencies and utils
 RUN apt-get update && apt-get install --no-install-recommends -y \

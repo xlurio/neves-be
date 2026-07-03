@@ -2,7 +2,7 @@ from django.db import models
 
 
 class GeneratedSpeech(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigIntegerField(primary_key=True)
     audio = models.FileField()
 
     def __str__(self) -> str:
@@ -10,7 +10,7 @@ class GeneratedSpeech(models.Model):
 
 
 class GeneratedTranslation(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigIntegerField(primary_key=True)
     output = models.TextField()
 
     def __str__(self):

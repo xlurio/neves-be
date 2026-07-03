@@ -258,6 +258,19 @@ LOGGING = {
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
 REDIS_SSL = REDIS_URL.startswith("rediss://")
 
+GENAI_TRANSLATION_MODEL_PATH = env(
+    "GENAI_TRANSLATION_MODEL_PATH",
+    default=str(BASE_DIR / "ov_nllb_model_int8"),
+)
+GENAI_TRANSLATION_TARGET_LANG = env(
+    "GENAI_TRANSLATION_TARGET_LANG",
+    default="eng_Latn",
+)
+GENAI_TRANSLATION_SOURCE_LANGS = env.list(
+    "GENAI_TRANSLATION_SOURCE_LANGS",
+    default=["zho_Hans", "zho_Hant"],
+)
+
 
 # CORS
 # ------------------------------------------------------------------------------

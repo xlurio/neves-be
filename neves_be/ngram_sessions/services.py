@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.db import models
 from django.http import Http404
 
 from neves_be.word_lm.models import Logogram
@@ -17,16 +16,10 @@ def owned_ngram_session_ngram_or_404(
     session: NgramSession,
     ngram_num: int,
 ) -> Ngram:
-    ngrams_qs = (
-        Ngram.objects.filter(
-            id__in=session.session_ngrams.values("ngram_id"),
-            ngram_sessions__position=ngram_num,
-        )
-        .annotate(
-            occurrences_sum=models.Sum("ngram_words__word__occurrences"),
-        )
-        .order_by("-occurrences_sum")
-    )
+    ngrams_qs = Ngram.objects.filter(
+        id__in=session.session_ngrams.values("ngram_id"),
+        ngram_sessions__position=ngram_num,
+    ).order_by("-occurrences")
 
     ngram = ngrams_qs.filter(ngram_sessions__position=ngram_num).first()
 
