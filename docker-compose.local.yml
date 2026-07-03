@@ -11,6 +11,7 @@ services:
     container_name: neves_be_local_django
     depends_on:
       - postgres
+      - rabbitmq
 
     volumes:
       - ./.env:/app/.env
@@ -19,6 +20,8 @@ services:
       - ./mcc2lm.db:/app/mcc2lm.db
       - ./neves_be:/app/neves_be
       - ./tests:/app/tests
+      - ./translation_model:/app/translation_model
+      - ./tts_model:/app/tts_model
 
     env_file:
       - .env
@@ -27,6 +30,35 @@ services:
       - "8000:8000"
 
     command: /start
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  celery:
+    image: neves_be_local_django
+    container_name: neves_be_local_celery
+    depends_on:
+      - postgres
+      - rabbitmq
+
+    volumes:
+      - ./.env:/app/.env
+      - ./audio-cmn:/app/audio-cmn
+      - ./config:/app/config
+      - ./mcc2lm.db:/app/mcc2lm.db
+      - ./neves_be:/app/neves_be
+      - ./tests:/app/tests
+      - ./translation_model:/app/translation_model
+      - ./tts_model:/app/tts_model
+
+    env_file:
+      - .env
+
+    command: /startworker
     deploy:
       resources:
         reservations:
@@ -54,3 +86,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: neves-be
+
+  rabbitmq:
+    image: rabbitmq:4.3
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3

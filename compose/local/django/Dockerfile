@@ -30,7 +30,7 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_6
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
   --mount=type=bind,source=uv.lock,target=uv.lock:rw \
-  uv sync --no-install-project --dev
+  uv sync --no-install-project --dev --group=parallel
 
 COPY ./manage.py /app/manage.py
 COPY ./README.md /app/README.md
@@ -43,17 +43,7 @@ COPY ./tests /app/tests
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
   --mount=type=bind,source=uv.lock,target=uv.lock:rw \
-  uv sync
-
-RUN uv run optimum-cli export openvino --model facebook/nllb-200-distilled-600M \
-  --task text2text-generation-with-past --weight-format int8 ov_nllb_model_int8
-
-RUN uv run huggingface-cli download Echo9Zulu/Qwen3-TTS-12Hz-Base-1.7B-INT8-OpenVINO \
-  --local-dir ./Qwen3-TTS-INT8-OV
-
-RUN cd /app/Qwen3-TTS-INT8-OV/speech_tokenizer && \
-  wget https://huggingface.co/Qwen/Qwen3-TTS-Tokenizer-12Hz/resolve/main/model.safetensors \
-  && cd /app
+  uv sync --dev --group=parallel
 
 # devcontainer dependencies and utils
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -73,6 +63,10 @@ RUN chmod +x /entrypoint
 
 COPY ./compose/local/django/start /start
 RUN sed -i 's/\r$//g' /start
+RUN chmod +x /start
+
+COPY ./compose/local/celery/start /start
+RUN sed -i 's/\r$//g' /startworker
 RUN chmod +x /start
 
 ENTRYPOINT ["/entrypoint"]

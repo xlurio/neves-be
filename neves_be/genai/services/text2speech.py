@@ -16,9 +16,9 @@ from neves_be.practice_assessments.constants import MASK_TOKEN
 @functools.cache
 def make_tts_model():
     assert pathlib.Path(
-        "/app/Qwen3-TTS-INT8-OV/speech_tokenizer/model.safetensors",
+        "/app/tts_model/speech_tokenizer/model.safetensors",
     ).is_file()
-    return OVQwen3TTSModel.from_pretrained("/app/Qwen3-TTS-INT8-OV", device="CPU")
+    return OVQwen3TTSModel.from_pretrained("/app/tts_model", device="CPU")
 
 
 @transaction.atomic

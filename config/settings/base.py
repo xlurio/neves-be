@@ -260,7 +260,7 @@ REDIS_SSL = REDIS_URL.startswith("rediss://")
 
 GENAI_TRANSLATION_MODEL_PATH = env(
     "GENAI_TRANSLATION_MODEL_PATH",
-    default=str(BASE_DIR / "ov_nllb_model_int8"),
+    default=str(BASE_DIR / "translation_model"),
 )
 GENAI_TRANSLATION_TARGET_LANG = env(
     "GENAI_TRANSLATION_TARGET_LANG",
@@ -280,6 +280,6 @@ CORS_ALLOWED_ORIGINS = env.list(
 )
 CORS_ALLOW_CREDENTIALS = env.bool("DJANGO_CORS_ALLOW_CREDENTIALS", default=True)
 
-
-# Your stuff...
+# CELERY
 # ------------------------------------------------------------------------------
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="amqp://rabbitmq:5673")
