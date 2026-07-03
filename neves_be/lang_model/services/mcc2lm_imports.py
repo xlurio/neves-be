@@ -69,7 +69,7 @@ def import_radical_logogram_maps(cursor: sqlite3.Cursor, batch_size: int) -> Non
     )
 
 
-def import_words(cursor: sqlite3.Cursor, batch_size: int) -> int:
+def import_words(cursor: sqlite3.Cursor, batch_size: int) -> None:
     word_rows = cursor.execute("SELECT * FROM MCC2LM_WORD").fetchall()
 
     Word.objects.bulk_create(

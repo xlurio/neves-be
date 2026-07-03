@@ -163,7 +163,15 @@ lint.ignore = [
   "S311",    # Random is useful unless used for cryptography,
   "SIM102"
 ]
-lint.exclude = [ "**/migrations/*.py", "config", "manage.py", "qwen_3_tts_helper.py", "tests" ]
+lint.exclude = [
+  "**/migrations/*.py",
+  "config/**",
+  "manage.py",
+  "qwen_3_tts_helper.py",
+  "tests/**",
+  "translation_model/**",
+  "tts_model/**"
+]
 lint.isort.force-single-line = true
 lint.pylint.max-statements = 30
 
@@ -185,6 +193,9 @@ warn_unused_configs = true
 overrides = [
   # Django migrations should not produce any errors:
   { module = "*.migrations.*", ignore_errors = true },
+  { module = "*.qwen_3_tts_helper", ignore_errors = true },
+  { module = "tts_model.*", ignore_errors = true },
+  { module = "translation_model.*", ignore_errors = true },
 ]
 
 [tool.django-stubs]

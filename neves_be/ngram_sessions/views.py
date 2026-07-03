@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from django.urls import reverse
 from rest_framework.decorators import api_view
@@ -19,6 +20,7 @@ from neves_be.word_lm.serializers import WordSerializer
 if TYPE_CHECKING:
     from rest_framework.request import Request
 
+    from neves_be.ngram_sessions.models import NgramSession
     from neves_be.ngram_sessions.types import NgramSessionId
 
 
@@ -30,7 +32,7 @@ def ngram_session_ngrams_view(
     ngram_num: int,
 ) -> Response:
     getter = make_session_getter(request.user, "ngrams")
-    session = getter.get_session(session_id)
+    session = cast("NgramSession", getter.get_session(session_id))
     total_ngrams = session.session_ngrams.count()
     ngram = owned_ngram_session_ngram_or_404(session, ngram_num)
 
@@ -79,7 +81,7 @@ def ngram_session_ngram_words_view(
     word_num: int,
 ) -> Response:
     getter = make_session_getter(request.user, "ngrams")
-    session = getter.get_session(session_id)
+    session = cast("NgramSession", getter.get_session(session_id))
     ngram = owned_ngram_session_ngram_or_404(session, ngram_num)
     total_words = ngram.ngram_words.count()
     word = owned_ngram_session_ngram_word_or_404(ngram, word_num, total_words)
@@ -132,7 +134,7 @@ def ngram_session_word_logogram_view(
     logogram_num: int,
 ) -> Response:
     getter = make_session_getter(request.user, "ngrams")
-    session = getter.get_session(session_id)
+    session = cast("NgramSession", getter.get_session(session_id))
     ngram = owned_ngram_session_ngram_or_404(session, ngram_num)
     total_words = ngram.ngram_words.count()
     word = owned_ngram_session_ngram_word_or_404(ngram, word_num, total_words)

@@ -19,6 +19,8 @@ from neves_be.practice_questions.models import RadicalSessionAssessmentQuestionA
 from neves_be.radical_sessions.models import RadicalSessionRadical
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from rest_framework.request import Request
 
     from neves_be.practice_assessments.types import ConcretePracticeSessionAssessment
@@ -28,7 +30,7 @@ if TYPE_CHECKING:
 
 class RadicalAssessmentFactory(BaseAssessmentFactory):
     def __init__(self, request: Request) -> None:
-        self.__request = request
+        self._request = request
 
     @transaction.atomic()
     def make_assessment(
@@ -55,13 +57,18 @@ class RadicalAssessmentFactory(BaseAssessmentFactory):
         alternatives_to_create: list[RadicalSessionAssessmentQuestionAlt] = []
         for number, radical in enumerate(assessment_radicals, start=1):
             question_rst = RadicalQuestionFactory(
-                request=self.__request,
+                request=self._request,
                 radical=radical,
                 radical_pool=radical_pool,
                 rng=rng,
             ).make_question(assessment, number)
 
-            alternatives_to_create.extend(question_rst["alternatives"])
+            alternatives_to_create.extend(
+                cast(
+                    "Iterable[RadicalSessionAssessmentQuestionAlt]",
+                    question_rst["alternatives"],
+                ),
+            )
 
         RadicalSessionAssessmentQuestionAlt.objects.bulk_create(
             alternatives_to_create,

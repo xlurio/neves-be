@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from django.db import models
 from rest_framework.decorators import api_view
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
     from rest_framework.request import Request
 
+    from neves_be.radical_sessions.models import RadicalSession
     from neves_be.radical_sessions.types import RadicalSessionId
 
 
@@ -28,7 +30,7 @@ def radical_session_radicals_view(
     session_id: RadicalSessionId,
 ) -> Response:
     getter = make_session_getter(request.user, "radicals")
-    session = getter.get_session(session_id)
+    session = cast("RadicalSession", getter.get_session(session_id))
 
     if request.method == "GET":
         radicals_qs: QuerySet[Radical] = (

@@ -21,14 +21,6 @@ type RadicalAssessmentQuestionType = Literal[
 
 NgramSessionAssessmentId = NewType("NgramSessionAssessmentId", UUID)
 
-type NgramAssessmentQuestionType = Literal[
-    "NGRAM-AUDIO-TO-WORD-AUDIO",
-    "NGRAM-TEXT-TO-WORD-AUDIO",
-    "NGRAM-AUDIO-TO-WORD-TEXT",
-    "NGRAM-TEXT-TO-WORD-TEXT",
-    "LOGOGRAM-TO-RADICALS",
-]
-
 
 type PracticeSessionAssessmentId = RadicalSessionAssessmentId | NgramSessionAssessmentId
 type ConcretePracticeSessionAssessment = (
@@ -39,13 +31,3 @@ type AssessmentType = Literal["radicals", "ngrams"]
 
 type AnswerChoice = Literal["a", "b", "c", "d", "e"]
 type CurrentAnswer = AnswerChoice | Literal[""]
-
-
-type ConcretePracticeAssessmentQuestionType = (
-    RadicalAssessmentQuestionType | NgramAssessmentQuestionType
-)
-
-
-type ConcreteAssessmentQuestionType = (
-    RadicalAssessmentQuestionType | NgramAssessmentQuestionType
-)

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class BaseAssessmentFactory(abc.ABC):
     def __init__(self, request: Request) -> None:
-        self.__request = request
+        self._request = request
 
     @abc.abstractmethod
     def make_assessment(
@@ -22,4 +22,4 @@ class BaseAssessmentFactory(abc.ABC):
 
     @property
     def request(self) -> Request:
-        return self.__request
+        return self._request

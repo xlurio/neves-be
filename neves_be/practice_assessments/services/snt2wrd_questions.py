@@ -4,6 +4,7 @@ import random
 from typing import TYPE_CHECKING
 from typing import TypedDict
 from typing import assert_never
+from typing import cast
 
 from neves_be.genai.services.text2speech import generate_speech
 from neves_be.practice_assessments.constants import MASK_TOKEN
@@ -12,6 +13,7 @@ from neves_be.practice_assessments.services.questions import BasePracticeQuestio
 from neves_be.practice_assessments.services.questions import PracticeQuestionSetup
 from neves_be.practice_questions.models import NgramSessionAssessmentQuestion
 from neves_be.practice_questions.models import NgramSessionAssessmentQuestionAlt
+from neves_be.practice_questions.models import NgramSessionQuestionType
 from neves_be.practice_questions.models import PracticeAssessmentAlternativeTypeChoices
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
 from neves_be.word_lm.models import Ngram
@@ -20,8 +22,8 @@ from neves_be.word_lm.models import Word
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from neves_be.practice_assessments.models import NgramSessionAssessment
     from neves_be.practice_assessments.models import PracticeSessionAssessment
-    from neves_be.practice_assessments.types import NgramAssessmentQuestionType
 
 
 class Ngram2WordQuestionSetup(TypedDict):
@@ -34,7 +36,7 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
     def __init__(
         self,
         ngram: Ngram,
-        question_type: NgramAssessmentQuestionType,
+        question_type: NgramSessionQuestionType,
     ) -> None:
         self.__ngram = ngram
         self.__question_type = question_type
@@ -57,7 +59,7 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
         )
 
         question = NgramSessionAssessmentQuestion.objects.create(
-            assessment=assessment,
+            assessment=cast("NgramSessionAssessment", assessment),
             expected_answer=alts_stp["correct_answer"],
             number=question_num,
             question=question_setup["question_txt"],
@@ -72,7 +74,7 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
     def __setup_ngr_2_wrd_question(
         self,
         ngram: Ngram,
-        question_type: NgramAssessmentQuestionType,
+        question_type: NgramSessionQuestionType,
     ) -> Ngram2WordQuestionSetup:
         selected_word = random.choice(
             Word.objects.filter(word_ngrams__ngram=ngram),
@@ -94,7 +96,8 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
                 f"What word is missing in the following ngram?\n{processed_ngram}"
             )
         else:
-            assert_never(question_type)  # type: ignore[arg-type]
+            msg = f"Unknown question type: {question_type}"
+            raise ValueError(msg)
 
         return Ngram2WordQuestionSetup(
             audio=audio,
@@ -104,20 +107,16 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
 
     def __select_words(self, word: Word) -> Sequence[Word]:
         words = set(Word.objects.exclude(pk=word.pk))
+        options = [*random.sample(cast("Sequence[Word]", words), k=4), word]
+        options.sort(key=lambda _: random.random())
 
-        return random.sample(
-            words.union(
-                {
-                    word,
-                },
-            ),
-        )
+        return cast("Sequence[Word]", options)
 
     def __setup_word_alternatives(
         self,
         question_word: Word,
         selected_words: Sequence[Word],
-        question_type: NgramAssessmentQuestionType,
+        question_type: NgramSessionQuestionType,
     ) -> AlternativesSetup:
         correct_answer = PracticeSessionAssessmentQuestionAnswer.A
         alt_letters = list(PracticeSessionAssessmentQuestionAnswer)
@@ -146,7 +145,7 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
 
     def __get_alt_type_by_question_type(
         self,
-        question_type: NgramAssessmentQuestionType,
+        question_type: NgramSessionQuestionType,
     ) -> PracticeAssessmentAlternativeTypeChoices:
         if question_type in {
             "NGRAM-AUDIO-TO-WORD-AUDIO",
@@ -160,8 +159,8 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
         }:
             return PracticeAssessmentAlternativeTypeChoices.TEXT
 
-        assert_never(question_type)  # type: ignore[arg-type]
-        return None
+        msg = f"Unknown question type {question_type}"
+        raise ValueError(msg)
 
     def __get_word_alt_payload_for_type(
         self,

@@ -114,7 +114,7 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
         result: dict[NgramId, list[Word]] = defaultdict(list)
 
         for ngr_wrd_pair in ngr_wrd_pairs:
-            result[cast("NgramId", ngr_wrd_pair.ngram_id)].append(
+            result[ngr_wrd_pair.ngram_id].append(
                 ngr_wrd_pair.word,
             )
 
@@ -135,13 +135,13 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
         ngrams: Sequence[Ngram],
     ) -> Sequence[NgramSessionAssessmentQuestion]:
         questions = set()
-        alternatives_to_create = []
+        alternatives_to_create: list[NgramSessionAssessmentQuestionAlt] = []
         number = 1
-        question_type = random.choice(NgramSessionQuestionType)
+        question_type = random.choice(list(NgramSessionQuestionType))
 
         for ngram in ngrams:
             if question_type == NgramSessionQuestionType.LOGOGRAM_TO_RADICALS:
-                rst = Char2RadicalQuestionFactory(ngram).make_question(
+                rst = Char2RadicalQuestionFactory().make_question(
                     assessment,
                     number,
                 )
@@ -156,7 +156,12 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
                 )
 
             questions.add(rst["question"])
-            alternatives_to_create.extend(rst["alternatives"])
+            alternatives_to_create.extend(
+                cast(
+                    "Sequence[NgramSessionAssessmentQuestionAlt]",
+                    rst["alternatives"],
+                ),
+            )
 
             number += 1
 

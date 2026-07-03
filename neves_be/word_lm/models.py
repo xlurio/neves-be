@@ -9,15 +9,15 @@ from neves_be.char_lm.models import Logogram
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
+    from neves_be.char_lm.types import LogogramId
     from neves_be.ngram_sessions.models import NgramSessionNgram
-    from neves_be.word_lm.types import LogogramId
     from neves_be.word_lm.types import NgramId
     from neves_be.word_lm.types import SentenceId
     from neves_be.word_lm.types import WordId
 
 
 class Word(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id: models.IntegerField[int, WordId] = models.IntegerField(primary_key=True)
     value = models.TextField()
     pronounce: models.CharField[str, str] = models.CharField(max_length=512, blank=True)
     pos_tag = models.CharField(max_length=255)

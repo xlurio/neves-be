@@ -1,12 +1,12 @@
+from __future__ import annotations
+
 import random
 from collections import defaultdict
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 from typing import cast
 
 from neves_be.char_lm.models import Radical
 from neves_be.char_lm.models import RadicalLogogramMap
-from neves_be.ngram_sessions.models import NgramSession
-from neves_be.practice_assessments.models import PracticeSessionAssessment
 from neves_be.practice_assessments.services.questions import AlternativesSetup
 from neves_be.practice_assessments.services.questions import BasePracticeQuestionFactory
 from neves_be.practice_assessments.services.questions import PracticeQuestionSetup
@@ -15,7 +15,14 @@ from neves_be.practice_questions.models import NgramSessionAssessmentQuestionAlt
 from neves_be.practice_questions.models import PracticeAssessmentAlternativeTypeChoices
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
 from neves_be.word_lm.models import Logogram
-from neves_be.word_lm.types import LogogramId
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from neves_be.char_lm.types import LogogramId
+    from neves_be.ngram_sessions.models import NgramSession
+    from neves_be.practice_assessments.models import NgramSessionAssessment
+    from neves_be.practice_assessments.models import PracticeSessionAssessment
 
 
 class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
@@ -24,7 +31,10 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
         assessment: PracticeSessionAssessment,
         question_num: int,
     ) -> PracticeQuestionSetup:
-        selected_logograms = self.__select_logograms(assessment.session)
+        _assessment = cast("NgramSessionAssessment", assessment)
+        del assessment
+
+        selected_logograms = self.__select_logograms(_assessment.session)
         question_logogram = selected_logograms[random.randint(0, 4)]
         alts_stp = self.__setup_logogram_alternatives(
             question_logogram,
@@ -35,7 +45,7 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
             number=question_num,
             question=self.__make_chr_2_rdcs_txt(question_logogram),
             expected_answer=alts_stp["correct_answer"],
-            assessment=assessment,
+            assessment=_assessment,
         )
 
         return PracticeQuestionSetup(

@@ -6,5 +6,5 @@ NgramSessionId = NewType("NgramSessionId", UUID)
 
 
 class NgramsStatistics(TypedDict):
-    is_unlocked: bool
+    isUnlocked: bool
     progress: float

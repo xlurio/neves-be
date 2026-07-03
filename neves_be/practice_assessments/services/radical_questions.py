@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import assert_never
 from typing import cast
 
 from neves_be.practice_assessments.constants import ANSWER_CHOICES
@@ -20,6 +19,7 @@ if TYPE_CHECKING:
     from rest_framework.request import Request
 
     from neves_be.char_lm.models import Radical
+    from neves_be.practice_assessments.models import PracticeSessionAssessment
     from neves_be.practice_assessments.models import RadicalSessionAssessment
     from neves_be.practice_assessments.types import RadicalAssessmentQuestionType
 
@@ -39,7 +39,7 @@ class RadicalQuestionFactory(BasePracticeQuestionFactory):
 
     def _setup_question(
         self,
-        assessment: RadicalSessionAssessment,
+        assessment: PracticeSessionAssessment,
         question_num: int,
     ) -> PracticeQuestionSetup:
         question_type = RADICAL_QUESTION_TYPES[
@@ -50,8 +50,8 @@ class RadicalQuestionFactory(BasePracticeQuestionFactory):
             self.__radical_pool,
             self.__rng,
         )
-        question = RadicalSessionAssessmentQuestion.objects.create(  # type: ignore[misc]
-            assessment=assessment,
+        question = RadicalSessionAssessmentQuestion.objects.create(
+            assessment=cast("RadicalSessionAssessment", assessment),
             number=question_num,
             type=question_type,
             question=self.__question_text(self.__radical, question_type),
@@ -73,7 +73,7 @@ class RadicalQuestionFactory(BasePracticeQuestionFactory):
     def __pick_option_radicals(
         self,
         correct: Radical,
-        pool: list[Radical],
+        pool: Sequence[Radical],
         rng: random.Random,
     ) -> list[Radical]:
         distractors = [radical for radical in pool if radical.id != correct.id]
@@ -152,6 +152,7 @@ class RadicalQuestionFactory(BasePracticeQuestionFactory):
                     ),
                 )
             else:
-                assert_never(question_type)
+                msg = f"Unknown question type: {question_type}"
+                raise ValueError(msg)
 
         return cast("Sequence[RadicalSessionAssessmentQuestionAlt]", alternatives)

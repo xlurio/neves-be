@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
     from neves_be.practice_assessments.types import NgramSessionAssessmentId
+    from neves_be.practice_assessments.types import PracticeSessionAssessmentId
     from neves_be.practice_assessments.types import RadicalSessionAssessmentId
 
 
@@ -43,7 +44,7 @@ class PracticeSessionAssessmentQuestion(UUIDPkModel):
     )
     question_alternatives: RelatedManager[PracticeSessionAssessmentQuestionAlt]
     assessment: PracticeSessionAssessment
-    assessment_id: RadicalSessionAssessmentId
+    assessment_id: PracticeSessionAssessmentId
 
     class Meta:
         abstract = True
@@ -96,7 +97,7 @@ class RadicalSessionAssessmentQuestion(PracticeSessionAssessmentQuestion):
         on_delete=models.CASCADE,
         related_name="questions",
     )
-    assessment_id: RadicalSessionAssessmentId
+    assessment_id: RadicalSessionAssessmentId  # type: ignore[assignment]
 
     class Meta:
         ordering = ["assessment", "number"]
@@ -154,7 +155,7 @@ class NgramSessionAssessmentQuestion(PracticeSessionAssessmentQuestion):
         on_delete=models.CASCADE,
         related_name="questions",
     )
-    assessment_id: NgramSessionAssessmentId
+    assessment_id: NgramSessionAssessmentId  # type: ignore[assignment]
     type = models.CharField(max_length=32, choices=NgramSessionQuestionType)
 
     class Meta:

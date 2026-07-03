@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import itertools
 import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import cast
 
 from django.db import models
 from django.db import transaction
@@ -40,7 +41,7 @@ class NgramSessionFactory(BaseSessionFactory):
 
     def __init__(self, user: User):
         super().__init__(user)
-        self.__cache = {}
+        self.__cache: dict[str, Any] = {}
 
     def make_session(self) -> ConcretePracticeSession:
         from neves_be.ngram_sessions.tasks import async_create_ngram_session  # noqa: I001, PLC0415
@@ -101,7 +102,9 @@ class NgramSessionFactory(BaseSessionFactory):
 
         session_ngrams = self.get_session_ngrams_qs()[:10]
         ngrams_to_words = self.__make_ngram_to_words_mapping(session_ngrams)
-        ngrams_to_logograms = self.__make_ngram_to_logograms_mapping(session_ngrams)
+        ngrams_to_logograms = self.__make_ngram_to_logograms_mapping(
+            cast("Sequence[Ngram]", session_ngrams),
+        )
 
         with ThreadPoolExecutor(1) as executor:
             for ngram_idx, curr_ngram in enumerate(
@@ -119,11 +122,11 @@ class NgramSessionFactory(BaseSessionFactory):
                 executor.submit(generate_speech, curr_ngram.value)
                 executor.map(
                     generate_speech,
-                    [word.value for word in ngrams_to_words[curr_ngram.pk]],
+                    [word.value for word in ngrams_to_words[curr_ngram.id]],
                 )
                 executor.map(
                     generate_speech,
-                    [char.pk for char in ngrams_to_logograms[curr_ngram.pk]],
+                    [char.pk for char in ngrams_to_logograms[curr_ngram.id]],
                 )
 
         return session_ngrams_to_create
@@ -137,15 +140,18 @@ class NgramSessionFactory(BaseSessionFactory):
 
         ngram_words = self.__make_ngram_to_words_mapping(ngrams)
 
-        words = list(itertools.chain(words for words in ngram_words.values()))
-        _logger.info("words=%s", words)
+        words_to_map: set[Word] = set()
 
-        word_logograms = self.__make_word_to_logograms_mapping(words)
+        for curr_words in ngram_words.values():
+            for word in curr_words:
+                words_to_map.add(word)
+
+        word_logograms = self.__make_word_to_logograms_mapping(words_to_map)
         result: dict[NgramId, set[Logogram]] = defaultdict(set)
 
-        for ngram_id, words in word_logograms.items():
+        for ngram_id, words in ngram_words.items():
             for word in words:
-                result[ngram_id].union(word_logograms[word.pk])
+                result[ngram_id].union(word_logograms[word.id])
 
         return result
 
@@ -163,7 +169,7 @@ class NgramSessionFactory(BaseSessionFactory):
         result: dict[NgramId, set[Word]] = defaultdict(set)
 
         for pair in pairs:
-            result[pair.pk].add(pair.word)
+            result[pair.ngram_id].add(pair.word)
 
         return result
 
@@ -229,7 +235,7 @@ class NgramSessionFactory(BaseSessionFactory):
             )
             .exclude(ngram_sessions__session__in=self.__get_user_sessions())
             .order_by("-occurrences", "-n_words")
-        )  # type: ignore[misc]
+        )
 
         return self.__cache[self.get_session_ngrams_qs.__name__]
 

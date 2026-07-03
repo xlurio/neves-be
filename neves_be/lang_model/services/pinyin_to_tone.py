@@ -1,25 +1,25 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import NewType
+from typing import Literal
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-Tone = NewType("Tone", int)
+type Tone = Literal[1, 2, 3, 4]
 
 
 class ToneAccessor:
     def get_tone_for_pinyin(
         self,
         pinyin: str,
-        char_tone_pairs: Sequence[tuple[str, Tone]],
+        char_tone_pairs: Sequence[tuple[str, Tone | Literal[""]]],
         *,
         start_pinyin_idx: int,
         end_pinyin_idx: int,
         start_map_idx: int,
         end_map_idx: int,
-    ) -> Tone:
+    ) -> Tone | Literal[""] | None:
         automata_state = 0
 
         assert start_pinyin_idx >= 0
@@ -48,13 +48,13 @@ class ToneAccessor:
     def _get_tone_for_pinyin_part_all(
         self,
         pinyin: str,
-        char_tone_pairs: Sequence[tuple[str, Tone]],
+        char_tone_pairs: Sequence[tuple[str, Tone | Literal[""]]],
         *,
         start_pinyin_idx: int,
         end_pinyin_idx: int,
         start_map_idx: int,
         end_map_idx: int,
-    ) -> Tone:
+    ) -> Tone | Literal[""] | None:
         mid_pinyin_idx = ((end_pinyin_idx - start_pinyin_idx) // 2) + start_pinyin_idx
         mid_map_idx = ((end_map_idx - start_map_idx) // 2) + start_map_idx
 
@@ -100,13 +100,13 @@ class ToneAccessor:
     def _get_tone_for_pinyin_part_map(
         self,
         pinyin: str,
-        char_tone_pairs: Sequence[tuple[str, Tone]],
+        char_tone_pairs: Sequence[tuple[str, Tone | Literal[""]]],
         *,
         start_pinyin_idx: int,
         end_pinyin_idx: int,
         start_map_idx: int,
         end_map_idx: int,
-    ) -> Tone:
+    ) -> Tone | Literal[""] | None:
         pinyin_idx = start_pinyin_idx
         del start_pinyin_idx, end_pinyin_idx
 
@@ -134,13 +134,13 @@ class ToneAccessor:
     def _get_tone_for_pinyin_part_pinyin(
         self,
         pinyin: str,
-        char_tone_pairs: Sequence[tuple[str, Tone]],
+        char_tone_pairs: Sequence[tuple[str, Tone | Literal[""]]],
         *,
         start_pinyin_idx: int,
         end_pinyin_idx: int,
         start_map_idx: int,
         end_map_idx: int,
-    ) -> Tone:
+    ) -> Tone | Literal[""] | None:
         map_idx = start_map_idx
         del start_map_idx, end_map_idx
 
@@ -168,13 +168,13 @@ class ToneAccessor:
     def _get_tone_for_pinyin_proc(
         self,
         pinyin: str,
-        char_tone_pairs: Sequence[tuple[str, Tone]],
+        char_tone_pairs: Sequence[tuple[str, Tone | Literal[""]]],
         *,
         start_pinyin_idx: int,
         end_pinyin_idx: int,
         start_map_idx: int,
         end_map_idx: int,
-    ) -> Tone:
+    ) -> Tone | Literal[""] | None:
         pinyin_idx = start_pinyin_idx
         map_idx = start_map_idx
 

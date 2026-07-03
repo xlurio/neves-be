@@ -7,12 +7,16 @@ from django.db import models
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
+    from neves_be.char_lm.types import LogogramId
+    from neves_be.char_lm.types import RadicalId
     from neves_be.radical_sessions.models import RadicalSessionRadical
-    from neves_be.word_lm.types import LogogramId
 
 
 class Radical(models.Model):
-    id = models.CharField(max_length=4, primary_key=True)
+    id: models.CharField[str, RadicalId] = models.CharField(
+        max_length=4,
+        primary_key=True,
+    )
     pinyin = models.TextField()
     meaning = models.TextField()
     pronounce: models.CharField[str, str] = models.CharField(max_length=512)
@@ -26,7 +30,10 @@ class Radical(models.Model):
 
 
 class Logogram(models.Model):
-    id = models.CharField(max_length=4, primary_key=True)
+    id: models.CharField[str, LogogramId] = models.CharField(
+        max_length=4,
+        primary_key=True,
+    )
     occurrences = models.PositiveIntegerField(default=0)
     pinyin = models.TextField()
     meaning = models.TextField()

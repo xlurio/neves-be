@@ -253,6 +253,23 @@ LOGGING = {
         },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
+    "loggers": {
+        "celery": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "celery.task": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "neves_be": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+    },
 }
 
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
@@ -288,6 +305,7 @@ CORS_ALLOW_CREDENTIALS = env.bool("DJANGO_CORS_ALLOW_CREDENTIALS", default=True)
 # CELERY
 # ------------------------------------------------------------------------------
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="amqp://guest:guest@rabbitmq:5672")
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 # Force Celery to create durable queues that survive RabbitMQ restarts
 CELERY_AMQP_QUEUE_DURABLE = True

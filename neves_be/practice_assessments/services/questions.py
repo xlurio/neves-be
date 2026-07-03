@@ -39,6 +39,8 @@ class BasePracticeQuestionFactory:
     ) -> PracticeQuestionSetup:
         del assessment, question_num
 
+        raise NotImplementedError
+
     def _annotate_question_to_alts_stp(
         self,
         question: PracticeSessionAssessmentQuestion,

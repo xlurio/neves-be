@@ -58,6 +58,9 @@ services:
     env_file:
       - .env
 
+    environment:
+      CELERY_LOG_LEVEL: ${CELERY_LOG_LEVEL:-INFO}
+
     command: /startworker
     deploy:
       resources:

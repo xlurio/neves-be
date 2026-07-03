@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
+from typing import TypedDict
 from typing import cast
 
 from django.db import models
+from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -20,8 +21,13 @@ from neves_be.practice_sessions.services.utils import make_session_serializer
 from neves_be.radical_sessions.services import make_radicals_stats
 
 if TYPE_CHECKING:
+    import datetime
+    from collections.abc import Sequence
+    from uuid import UUID
+
     from rest_framework.request import Request
 
+    from neves_be.practice_sessions.types import ConcretePracticeSession
     from neves_be.practice_sessions.types import ConcretePracticeSessionId
     from neves_be.practice_sessions.types import SessionType
     from neves_be.users.models import User
@@ -31,7 +37,15 @@ class DefaultPagination(PageNumberPagination):
     page_size = 10
 
 
-def _make_pending_ngram_entries(user: User) -> list[dict[str, Any]]:
+class PendingNgramEntry(TypedDict):
+    id: UUID
+    created_at: datetime.datetime | None
+    highest_score: int | None
+    num_of_ngrams: int | None
+    is_ready: bool
+
+
+def _make_pending_ngram_entries(user: User) -> Sequence[PendingNgramEntry]:
     pending_requests = NgramSessionRequest.objects.filter(
         user=user,
         finished_at__isnull=True,
@@ -50,7 +64,7 @@ def _make_pending_ngram_entries(user: User) -> list[dict[str, Any]]:
     ]
 
 
-def _make_ngram_list_payload(user: User) -> list[dict[str, Any]]:
+def _make_ngram_list_payload(user: User) -> Sequence[PendingNgramEntry]:
     ready_sessions = list(
         NgramSession.objects.filter(user=user)
         .annotate(
@@ -68,11 +82,14 @@ def _make_ngram_list_payload(user: User) -> list[dict[str, Any]]:
             "is_ready",
         ),
     )
-    merged_payload = [*ready_sessions, *_make_pending_ngram_entries(user)]
+    merged_payload = cast(
+        "Sequence[PendingNgramEntry]",
+        [*ready_sessions, *_make_pending_ngram_entries(user)],
+    )
 
     return sorted(
         merged_payload,
-        key=lambda item: item["created_at"],
+        key=lambda item: item["created_at"] or timezone.now(),
         reverse=True,
     )
 
@@ -96,12 +113,16 @@ def practice_sessions_view(request: Request, session_type: SessionType) -> Respo
 
     if request.method == "GET":
         paginator = DefaultPagination()
+        queryset: Sequence[ConcretePracticeSession | PendingNgramEntry]
 
         if session_type == "ngrams":
             queryset = _make_ngram_list_payload(cast("User", request.user))
         else:
             getter = make_session_getter(request.user, session_type)
-            queryset = getter.get_sessions()
+            queryset = cast(
+                "Sequence[ConcretePracticeSession | PendingNgramEntry]",
+                getter.get_sessions(),
+            )
 
         page = paginator.paginate_queryset(queryset, request)
 
