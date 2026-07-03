@@ -501,19 +501,21 @@ def cleanup_torchscript_cache():
 core = ov.Core()
 
 # File naming conventions for Qwen3-TTS
-TALKER_LANGUAGE_NAME = "talker.xml"
-TALKER_EMBEDDING_NAME = "codec_embedding.xml"
-TALKER_TEXT_EMBEDDING_NAME = "text_model.xml"
-TALKER_TEXT_PROJECTION_NAME = "text_model.xml"
+TALKER_LANGUAGE_NAME = "openvino_talker_language_model.xml"
+TALKER_EMBEDDING_NAME = "openvino_talker_embedding_model.xml"
+TALKER_TEXT_EMBEDDING_NAME = "openvino_talker_text_embedding_model.xml"
+TALKER_TEXT_PROJECTION_NAME = "openvino_talker_text_projection_model.xml"
 
-TALKER_CODE_PREDICTOR_EMBEDDING_NAME = "cp_codec_embedding.xml"
-TALKER_CODE_PREDICTOR_NAME = "code_predictor.xml"
+TALKER_CODE_PREDICTOR_EMBEDDING_NAME = (
+    "openvino_talker_code_predictor_embedding_model.xml"
+)
+TALKER_CODE_PREDICTOR_NAME = "openvino_talker_code_predictor_model.xml"
 
-SPEAKER_ENCODER_NAME = "speaker_encoder.xml"
+SPEAKER_ENCODER_NAME = "openvino_speaker_encoder_model.xml"
 
 # Speech tokenizer model names
-SPEECH_TOKENIZER_ENCODER_NAME = "speech_tokenizer/speech_encoder.xml"
-SPEECH_TOKENIZER_DECODER_NAME = "speech_tokenizer/speech_decoder.xml"
+SPEECH_TOKENIZER_ENCODER_NAME = "openvino_speech_tokenizer_encoder_model.xml"
+SPEECH_TOKENIZER_DECODER_NAME = "openvino_speech_tokenizer_decoder_model.xml"
 
 
 def convert_qwen3_tts_model(
@@ -1317,10 +1319,6 @@ class OVQwen3TTSTalkerCodePredictorModelForConditionalGeneration(GenerationMixin
         )
         self.request = compiled_model.create_infer_request()
 
-        # Resolve OpenVINO tensor keys once to support models with renamed/missing ports.
-        self._code_predictor_input_keys = self._resolve_code_predictor_input_keys()
-        self._code_predictor_output_keys = self._resolve_code_predictor_output_keys()
-
         # Create embedding wrapper
         self.get_input_embeddings = lambda: self._embedding_wrapper
         self._embedding_wrapper = self._create_embedding_wrapper()
@@ -1343,142 +1341,18 @@ class OVQwen3TTSTalkerCodePredictorModelForConditionalGeneration(GenerationMixin
         self._supports_static_cache = True
         self.dtype = torch.float16
 
-    @staticmethod
-    def _port_rank(port) -> Optional[int]:
-        rank = port.get_partial_shape().rank
-        return rank.get_length() if rank.is_static else None
-
-    @staticmethod
-    def _port_dtype(port) -> str:
-        return str(port.get_element_type()).lower()
-
-    def _resolve_code_predictor_input_keys(self) -> dict[str, Optional[str]]:
-        """Resolve semantic input keys to actual OpenVINO input tensor names."""
-        keys = {
-            "inputs_embeds": None,
-            "attention_mask": None,
-            "position_ids": None,
-            "generation_steps": None,
-            "beam_idx": None,
-        }
-
-        available_names = list(self.input_names.keys())
-
-        for semantic in keys:
-            if semantic in self.input_names:
-                keys[semantic] = semantic
-
-        used = {value for value in keys.values() if value is not None}
-
-        for name in available_names:
-            lname = name.lower()
-            if (
-                keys["attention_mask"] is None
-                and "attention" in lname
-                and "mask" in lname
-            ):
-                keys["attention_mask"] = name
-                used.add(name)
-                continue
-            if keys["position_ids"] is None and "position" in lname:
-                keys["position_ids"] = name
-                used.add(name)
-                continue
-            if keys["inputs_embeds"] is None and "embed" in lname:
-                keys["inputs_embeds"] = name
-                used.add(name)
-                continue
-            if keys["generation_steps"] is None and "generation" in lname:
-                keys["generation_steps"] = name
-                used.add(name)
-                continue
-            if keys["beam_idx"] is None and "beam" in lname:
-                keys["beam_idx"] = name
-                used.add(name)
-
-        for port in self.model.inputs:
-            name = port.get_any_name()
-            if name in used:
-                continue
-
-            rank = self._port_rank(port)
-            dtype = self._port_dtype(port)
-            is_int = "i32" in dtype or "i64" in dtype
-            is_float = "f16" in dtype or "f32" in dtype
-
-            if keys["inputs_embeds"] is None and rank == 3 and is_float:
-                keys["inputs_embeds"] = name
-                used.add(name)
-                continue
-            if (
-                keys["position_ids"] is None
-                and rank == 2
-                and is_int
-                and "position" in name.lower()
-            ):
-                keys["position_ids"] = name
-                used.add(name)
-                continue
-            if keys["attention_mask"] is None and rank == 2 and is_int:
-                keys["attention_mask"] = name
-                used.add(name)
-                continue
-            if keys["beam_idx"] is None and rank == 1 and is_int:
-                keys["beam_idx"] = name
-                used.add(name)
-                continue
-            if keys["generation_steps"] is None and rank == 0 and is_int:
-                keys["generation_steps"] = name
-                used.add(name)
-
-        return keys
-
-    def _resolve_code_predictor_output_keys(self) -> dict[str, Optional[str]]:
-        """Resolve semantic output keys to actual OpenVINO output tensor names."""
-        keys = {"logits": None, "mid_residual_hiddens": None}
-
-        if "logits" in self.output_names:
-            keys["logits"] = "logits"
-        if "mid_residual_hiddens" in self.output_names:
-            keys["mid_residual_hiddens"] = "mid_residual_hiddens"
-
-        for name in self.output_names.keys():
-            lname = name.lower()
-            if keys["logits"] is None and "logit" in lname:
-                keys["logits"] = name
-                continue
-            if keys["mid_residual_hiddens"] is None and (
-                "mid_residual" in lname or "hidden" in lname
-            ):
-                keys["mid_residual_hiddens"] = name
-
-        if (
-            keys["logits"] is None or keys["mid_residual_hiddens"] is None
-        ) and self.model.outputs:
-            ordered_outputs = [port.get_any_name() for port in self.model.outputs]
-            if keys["logits"] is None and len(ordered_outputs) >= 1:
-                keys["logits"] = ordered_outputs[0]
-            if keys["mid_residual_hiddens"] is None and len(ordered_outputs) >= 2:
-                keys["mid_residual_hiddens"] = ordered_outputs[1]
-
-        return keys
-
     def _create_embedding_wrapper(self):
         """Create a callable wrapper for embeddings that works with OpenVINO."""
 
         def embedding_fn(input_ids, generation_steps):
-            input_ids_np = (
-                input_ids.detach().cpu().numpy()
-                if isinstance(input_ids, torch.Tensor)
-                else input_ids
-            )
-            generation_steps_np = np.array(generation_steps, dtype=np.int64)
-
-            # Use positional inputs to avoid relying on fragile converted tensor names
-            # (e.g. converted models may expose names other than "input_ids").
-            result = self.code_predictor_embedding([input_ids_np, generation_steps_np])[
-                0
-            ]
+            result = self.code_predictor_embedding(
+                {
+                    "input_ids": input_ids.numpy()
+                    if isinstance(input_ids, torch.Tensor)
+                    else input_ids,
+                    "generation_steps": np.array(generation_steps, dtype=np.int64),
+                }
+            )[0]
             return torch.from_numpy(result)
 
         return embedding_fn
@@ -1523,51 +1397,21 @@ class OVQwen3TTSTalkerCodePredictorModelForConditionalGeneration(GenerationMixin
             self._past_length = 0
 
         # Prepare inputs
-        inputs_embeds_key = self._code_predictor_input_keys.get("inputs_embeds")
-        attention_mask_key = self._code_predictor_input_keys.get("attention_mask")
-        position_ids_key = self._code_predictor_input_keys.get("position_ids")
-        generation_steps_key = self._code_predictor_input_keys.get("generation_steps")
-
-        if not inputs_embeds_key:
-            raise RuntimeError(
-                "Could not resolve required code predictor input tensor name for inputs_embeds "
-                f"(resolved={self._code_predictor_input_keys})."
-            )
-
         inputs = {
-            inputs_embeds_key: inputs_embeds.detach().cpu().numpy()
+            "inputs_embeds": inputs_embeds.numpy()
             if isinstance(inputs_embeds, torch.Tensor)
             else inputs_embeds,
+            "attention_mask": attention_mask.numpy()
+            if isinstance(attention_mask, torch.Tensor)
+            else attention_mask,
+            "position_ids": position_ids.numpy()
+            if isinstance(position_ids, torch.Tensor)
+            else position_ids,
+            "generation_steps": np.array(generation_steps, dtype=np.int64),
         }
 
-        if attention_mask_key is not None:
-            if attention_mask is None:
-                raise RuntimeError(
-                    "Code predictor expects attention_mask, but no attention_mask was provided."
-                )
-            inputs[attention_mask_key] = (
-                attention_mask.detach().cpu().numpy()
-                if isinstance(attention_mask, torch.Tensor)
-                else attention_mask
-            )
-
-        if position_ids_key is not None:
-            if position_ids is None:
-                raise RuntimeError(
-                    "Code predictor expects position_ids, but no position_ids were provided."
-                )
-            inputs[position_ids_key] = (
-                position_ids.detach().cpu().numpy()
-                if isinstance(position_ids, torch.Tensor)
-                else position_ids
-            )
-
-        if generation_steps_key is not None:
-            inputs[generation_steps_key] = np.array(generation_steps, dtype=np.int64)
-
-        beam_idx_key = self._code_predictor_input_keys.get("beam_idx")
-        if beam_idx_key:
-            inputs[beam_idx_key] = (
+        if "beam_idx" in self.input_names:
+            inputs["beam_idx"] = (
                 self.next_beam_idx
                 if self.next_beam_idx is not None
                 else np.arange(inputs_embeds.shape[0], dtype=int)
@@ -1577,20 +1421,11 @@ class OVQwen3TTSTalkerCodePredictorModelForConditionalGeneration(GenerationMixin
         self.request.start_async(inputs, share_inputs=False)
         self.request.wait()
 
-        logits_key = self._code_predictor_output_keys.get("logits")
-        hidden_states_key = self._code_predictor_output_keys.get("mid_residual_hiddens")
-
-        if not logits_key or not hidden_states_key:
-            raise RuntimeError(
-                "Could not resolve required code predictor output tensor names "
-                f"(resolved={self._code_predictor_output_keys})."
-            )
-
-        logits = torch.from_numpy(self.request.get_tensor(logits_key).data.copy()).to(
+        logits = torch.from_numpy(self.request.get_tensor("logits").data.copy()).to(
             self.device
         )
         hidden_states = torch.from_numpy(
-            self.request.get_tensor(hidden_states_key).data.copy()
+            self.request.get_tensor("mid_residual_hiddens").data.copy()
         ).to(self.device)
 
         return Qwen3TTSTalkerCodePredictorOutputWithPast(
@@ -1663,10 +1498,6 @@ class OVQwen3TTSTalkerForConditionalGeneration(GenerationMixin):
         compiled_model = core.compile_model(self.model, device)
         self.request = compiled_model.create_infer_request()
 
-        # Resolve real OpenVINO tensor keys once to support models with renamed ports.
-        self._talker_input_keys = self._resolve_talker_input_keys()
-        self._talker_output_keys = self._resolve_talker_output_keys()
-
         # Load embedding models
         self.embed_tokens = core.compile_model(
             model_dir / TALKER_EMBEDDING_NAME, device
@@ -1676,12 +1507,6 @@ class OVQwen3TTSTalkerForConditionalGeneration(GenerationMixin):
         )
         self.text_projection_model = core.compile_model(
             model_dir / TALKER_TEXT_PROJECTION_NAME, device
-        )
-        self._text_models_share_same_path = (
-            model_dir / TALKER_TEXT_EMBEDDING_NAME
-        ).resolve() == (model_dir / TALKER_TEXT_PROJECTION_NAME).resolve()
-        self._text_projection_expects_token_ids = (
-            self._compiled_model_expects_token_ids(self.text_projection_model)
         )
 
         # Create embedding wrapper
@@ -1711,145 +1536,6 @@ class OVQwen3TTSTalkerForConditionalGeneration(GenerationMixin):
         self._supports_sdpa = True
         self._supports_cache_class = True
         self._supports_static_cache = True
-
-    @staticmethod
-    def _compiled_model_expects_token_ids(compiled_model) -> bool:
-        """Return True when model input expects integer token IDs (fused text model)."""
-        try:
-            if not compiled_model.inputs:
-                return False
-            element_type = str(compiled_model.inputs[0].get_element_type()).lower()
-            return "i64" in element_type or "i32" in element_type
-        except Exception:
-            return False
-
-    @staticmethod
-    def _port_rank(port) -> Optional[int]:
-        rank = port.get_partial_shape().rank
-        return rank.get_length() if rank.is_static else None
-
-    @staticmethod
-    def _port_dtype(port) -> str:
-        return str(port.get_element_type()).lower()
-
-    def _resolve_talker_input_keys(self) -> dict[str, Optional[str]]:
-        """Resolve semantic input keys to actual OpenVINO input tensor names."""
-        keys = {
-            "inputs_embeds": None,
-            "attention_mask": None,
-            "position_ids": None,
-            "beam_idx": None,
-        }
-
-        available_names = list(self.input_names.keys())
-
-        # Prefer exact names when present.
-        for semantic in keys:
-            if semantic in self.input_names:
-                keys[semantic] = semantic
-
-        used = {value for value in keys.values() if value is not None}
-
-        # Then try fuzzy name matching.
-        for name in available_names:
-            lname = name.lower()
-            if (
-                keys["attention_mask"] is None
-                and "attention" in lname
-                and "mask" in lname
-            ):
-                keys["attention_mask"] = name
-                used.add(name)
-                continue
-            if keys["position_ids"] is None and "position" in lname:
-                keys["position_ids"] = name
-                used.add(name)
-                continue
-            if keys["inputs_embeds"] is None and "embed" in lname:
-                keys["inputs_embeds"] = name
-                used.add(name)
-                continue
-            if keys["beam_idx"] is None and "beam" in lname:
-                keys["beam_idx"] = name
-                used.add(name)
-
-        # Finally infer from shapes/dtypes when names are not stable.
-        for port in self.model.inputs:
-            name = port.get_any_name()
-            if name in used:
-                continue
-
-            rank = self._port_rank(port)
-            dtype = self._port_dtype(port)
-            is_int = "i32" in dtype or "i64" in dtype
-            is_float = "f16" in dtype or "f32" in dtype
-
-            if keys["inputs_embeds"] is None and rank == 3 and is_float:
-                keys["inputs_embeds"] = name
-                used.add(name)
-                continue
-            if keys["position_ids"] is None and rank == 3 and is_int:
-                keys["position_ids"] = name
-                used.add(name)
-                continue
-            if keys["attention_mask"] is None and rank == 2 and is_int:
-                keys["attention_mask"] = name
-                used.add(name)
-                continue
-            if keys["beam_idx"] is None and rank == 1 and is_int:
-                keys["beam_idx"] = name
-                used.add(name)
-
-        return keys
-
-    def _resolve_talker_output_keys(self) -> dict[str, Optional[str]]:
-        """Resolve semantic output keys to actual OpenVINO output tensor names."""
-        keys = {"logits": None, "hidden_states": None}
-
-        if "logits" in self.output_names:
-            keys["logits"] = "logits"
-        if "hidden_states" in self.output_names:
-            keys["hidden_states"] = "hidden_states"
-
-        for name in self.output_names.keys():
-            lname = name.lower()
-            if keys["logits"] is None and "logit" in lname:
-                keys["logits"] = name
-                continue
-            if keys["hidden_states"] is None and "hidden" in lname:
-                keys["hidden_states"] = name
-
-        if keys["logits"] is None or keys["hidden_states"] is None:
-            for port in self.model.outputs:
-                name = port.get_any_name()
-                rank = self._port_rank(port)
-                if rank != 3:
-                    continue
-
-                last_dim = None
-                pshape = port.get_partial_shape()
-                if pshape[-1].is_static:
-                    last_dim = pshape[-1].get_length()
-
-                if (
-                    keys["hidden_states"] is None
-                    and last_dim == self.config.hidden_size
-                ):
-                    keys["hidden_states"] = name
-                elif keys["logits"] is None:
-                    keys["logits"] = name
-
-        # Safe fallback: preserve conversion order assumptions if names are opaque.
-        if (
-            keys["logits"] is None or keys["hidden_states"] is None
-        ) and self.model.outputs:
-            ordered_outputs = [port.get_any_name() for port in self.model.outputs]
-            if keys["logits"] is None and len(ordered_outputs) >= 1:
-                keys["logits"] = ordered_outputs[0]
-            if keys["hidden_states"] is None and len(ordered_outputs) >= 2:
-                keys["hidden_states"] = ordered_outputs[1]
-
-        return keys
 
     def _create_embedding_wrapper(self):
         """Create a callable wrapper for codec embeddings."""
@@ -1892,33 +1578,8 @@ class OVQwen3TTSTalkerForConditionalGeneration(GenerationMixin):
 
     def text_projection(self, hidden_states: torch.Tensor) -> torch.Tensor:
         """Apply text projection."""
-        if self._text_models_share_same_path or self._text_projection_expects_token_ids:
-            # In fused exports, text_model.xml already performs embedding + projection.
-            return hidden_states
-
-        hidden_states_np = hidden_states.detach().cpu().numpy()
-        try:
-            result = self.text_projection_model(hidden_states_np)[0]
-            return torch.from_numpy(result)
-        except RuntimeError as exc:
-            # Compatibility for exports expecting 2D input: [tokens, hidden_size].
-            if hidden_states_np.ndim <= 2:
-                raise
-            hidden_flat = hidden_states_np.reshape(-1, hidden_states_np.shape[-1])
-            try:
-                result = self.text_projection_model(hidden_flat)[0]
-            except RuntimeError:
-                raise exc
-            output = torch.from_numpy(result)
-
-            expected_numel = int(
-                np.prod(hidden_states_np.shape[:-1]) * output.shape[-1]
-            )
-            if output.numel() != expected_numel:
-                # Invalid fallback shape; keep original hidden states to preserve dimensions.
-                return hidden_states
-
-            return output.reshape(*hidden_states_np.shape[:-1], output.shape[-1])
+        result = self.text_projection_model(hidden_states.numpy())[0]
+        return torch.from_numpy(result)
 
     def can_generate(self):
         """Returns True for GenerationMixin validation."""
@@ -2048,47 +1709,20 @@ class OVQwen3TTSTalkerForConditionalGeneration(GenerationMixin):
             self._past_length = 0
 
         # Prepare inputs
-        inputs_embeds_key = self._talker_input_keys.get("inputs_embeds")
-        attention_mask_key = self._talker_input_keys.get("attention_mask")
-        position_ids_key = self._talker_input_keys.get("position_ids")
-
-        if not inputs_embeds_key:
-            raise RuntimeError(
-                "Could not resolve required talker input tensor name for inputs_embeds "
-                f"(resolved={self._talker_input_keys})."
-            )
-
         inputs = {
-            inputs_embeds_key: inputs_embeds.detach().cpu().numpy()
+            "inputs_embeds": inputs_embeds.numpy()
             if isinstance(inputs_embeds, torch.Tensor)
             else inputs_embeds,
+            "attention_mask": attention_mask.numpy()
+            if isinstance(attention_mask, torch.Tensor)
+            else attention_mask,
+            "position_ids": position_ids.numpy()
+            if isinstance(position_ids, torch.Tensor)
+            else position_ids,
         }
 
-        if attention_mask_key is not None:
-            if attention_mask is None:
-                raise RuntimeError(
-                    "Talker model expects attention_mask, but no attention_mask was provided."
-                )
-            inputs[attention_mask_key] = (
-                attention_mask.detach().cpu().numpy()
-                if isinstance(attention_mask, torch.Tensor)
-                else attention_mask
-            )
-
-        if position_ids_key is not None:
-            if position_ids is None:
-                raise RuntimeError(
-                    "Talker model expects position_ids, but no position_ids were computed."
-                )
-            inputs[position_ids_key] = (
-                position_ids.detach().cpu().numpy()
-                if isinstance(position_ids, torch.Tensor)
-                else position_ids
-            )
-
-        beam_idx_key = self._talker_input_keys.get("beam_idx")
-        if beam_idx_key:
-            inputs[beam_idx_key] = (
+        if "beam_idx" in self.input_names:
+            inputs["beam_idx"] = (
                 self.next_beam_idx
                 if self.next_beam_idx is not None
                 else np.arange(inputs_embeds.shape[0], dtype=int)
@@ -2098,20 +1732,11 @@ class OVQwen3TTSTalkerForConditionalGeneration(GenerationMixin):
         self.request.start_async(inputs, share_inputs=False)
         self.request.wait()
 
-        logits_key = self._talker_output_keys.get("logits")
-        hidden_states_key = self._talker_output_keys.get("hidden_states")
-
-        if not logits_key or not hidden_states_key:
-            raise RuntimeError(
-                "Could not resolve required talker output tensor names "
-                f"(resolved={self._talker_output_keys})."
-            )
-
-        logits = torch.from_numpy(self.request.get_tensor(logits_key).data.copy()).to(
+        logits = torch.from_numpy(self.request.get_tensor("logits").data.copy()).to(
             self.device
         )
         hidden_states = torch.from_numpy(
-            self.request.get_tensor(hidden_states_key).data.copy()
+            self.request.get_tensor("hidden_states").data.copy()
         ).to(self.device)
 
         return Qwen3TTSTalkerOutputWithPast(

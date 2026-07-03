@@ -271,6 +271,11 @@ GENAI_TRANSLATION_SOURCE_LANGS = env.list(
     default=["zho_Hans", "zho_Hant"],
 )
 
+GENAI_TTS_MODEL_PATH = env(
+    "GENAI_TRANSLATION_MODEL_PATH",
+    default=str(BASE_DIR / "tts_model"),
+)
+
 
 # CORS
 # ------------------------------------------------------------------------------

@@ -277,3 +277,5 @@ neves_be/media/
 
 # Artefacts
 *.db*
+translation_model/*
+tts_model/*

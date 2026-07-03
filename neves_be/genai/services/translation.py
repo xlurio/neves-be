@@ -10,6 +10,7 @@ from transformers import PreTrainedTokenizerBase
 
 from neves_be.genai.exceptions import TranslationError
 from neves_be.genai.models import GeneratedTranslation
+from neves_be.genai.services.local_utils import generation_cache_id
 
 CHINESE_CHAR_PATTERN = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]")
 EXTRA_TOKEN_PATTERN = re.compile(r"[<]extra_id_[0-9]+[>]")
@@ -71,7 +72,9 @@ def _generate_candidate(
 
 @transaction.atomic
 def generate_translation(txt: str) -> str:
-    if translation_model := GeneratedTranslation.objects.filter(id=hash(txt)).first():
+    if translation_model := GeneratedTranslation.objects.filter(
+        id=generation_cache_id(txt),
+    ).first():
         if _is_valid_translation(translation_model.output):
             return translation_model.output
         _logger.warning(
