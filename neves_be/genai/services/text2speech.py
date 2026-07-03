@@ -38,7 +38,7 @@ def generate_speech(txt: str) -> str:
         max_new_tokens=4096,
     )
 
-    audio_model, _ = GeneratedSpeech.objects.get_or_create(id=hash(txt))
+    audio_model, _ = GeneratedSpeech.objects.get_or_create(id=generation_cache_id(txt))
 
     with tempfile.NamedTemporaryFile("w+b", suffix=".wav") as audio_file:
         sf.write(audio_file.name, wavs[0], sr)

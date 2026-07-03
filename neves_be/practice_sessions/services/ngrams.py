@@ -55,7 +55,7 @@ class NgramSessionFactory(BaseSessionFactory):
                 details="As soon as it is ready it'll be available to you",
             )
 
-        async_create_ngram_session.delay(self._user)
+        async_create_ngram_session.delay(self._user.pk)
 
         raise AsyncOperationError(
             code="ASYNC_OP",
@@ -136,9 +136,11 @@ class NgramSessionFactory(BaseSessionFactory):
         _logger.info("Making n-gram to logograms mappings")
 
         ngram_words = self.__make_ngram_to_words_mapping(ngrams)
-        word_logograms = self.__make_word_to_logograms_mapping(
-            itertools.chain(words for words in ngram_words.values()),
-        )
+
+        words = list(itertools.chain(words for words in ngram_words.values()))
+        _logger.info("words=%s", words)
+
+        word_logograms = self.__make_word_to_logograms_mapping(words)
         result: dict[NgramId, set[Logogram]] = defaultdict(set)
 
         for ngram_id, words in word_logograms.items():
@@ -155,7 +157,7 @@ class NgramSessionFactory(BaseSessionFactory):
         _logger.info("Making n-gram to words mappings")
 
         pairs = WordNgramMap.objects.filter(ngram__in=ngrams).select_related(
-            "pair",
+            "ngram",
             "word",
         )
         result: dict[NgramId, set[Word]] = defaultdict(set)

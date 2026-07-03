@@ -287,4 +287,16 @@ CORS_ALLOW_CREDENTIALS = env.bool("DJANGO_CORS_ALLOW_CREDENTIALS", default=True)
 
 # CELERY
 # ------------------------------------------------------------------------------
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="amqp://rabbitmq:5673")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="amqp://guest:guest@rabbitmq:5672")
+
+# Force Celery to create durable queues that survive RabbitMQ restarts
+CELERY_AMQP_QUEUE_DURABLE = True
+CELERY_TASK_CREATE_MISSING_QUEUES = True
+
+# If you use RabbitMQ as a result backend, make the result queues durable
+CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {
+    "queue_durable": True,
+    "queue_arguments": {
+        "x-expires": 86400000,
+    },  # Deletes old result queues after 24 hours
+}

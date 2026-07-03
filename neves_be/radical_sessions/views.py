@@ -47,4 +47,4 @@ def radical_session_radicals_view(
         return paginator.get_paginated_response(serializer.data)
 
     new_radical = add_radical_to_session(request, session)
-    return Response(RadicalSerializer(new_radical).data)
+    return Response(RadicalSerializer(new_radical, context={"request": request}).data)

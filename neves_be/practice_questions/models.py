@@ -6,7 +6,7 @@ from typing import NewType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from neves_be.common.models import UUIDPkModelMixin
+from neves_be.common.models import UUIDPkModel
 from neves_be.practice_assessments.models import NgramSessionAssessment
 from neves_be.practice_assessments.models import PracticeSessionAssessment
 from neves_be.practice_assessments.models import RadicalSessionAssessment
@@ -26,7 +26,7 @@ class PracticeSessionAssessmentQuestionAnswer(models.TextChoices):
     E = "e", "E"
 
 
-class PracticeSessionAssessmentQuestion(UUIDPkModelMixin, models.Model):
+class PracticeSessionAssessmentQuestion(UUIDPkModel):
     type = models.CharField()
     number = models.PositiveIntegerField()
     question = models.TextField()
@@ -60,7 +60,7 @@ class PracticeAssessmentAlternativeTypeChoices(models.TextChoices):
     TEXT = "TEXT", "Text"
 
 
-class PracticeSessionAssessmentQuestionAlt(UUIDPkModelMixin, models.Model):
+class PracticeSessionAssessmentQuestionAlt(UUIDPkModel):
     letter = models.CharField(
         max_length=1,
         choices=PracticeSessionAssessmentQuestionAnswer,

@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 from django.conf import settings
 from django.db import models
 
-from neves_be.common.models import UUIDPkModelMixin
+from neves_be.common.models import UUIDPkModel
 
 if TYPE_CHECKING:
     from neves_be.users.models import User
 
 
-class PracticeSession(UUIDPkModelMixin, models.Model):
+class PracticeSession(UUIDPkModel):
     user: models.ForeignKey[User, User | None] = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -31,7 +31,7 @@ class PracticeSessionMeta:
     ordering = ("-created_at",)
 
 
-class PracticeSessionItem(UUIDPkModelMixin, models.Model):
+class PracticeSessionItem(UUIDPkModel):
     position = models.PositiveIntegerField(default=0)
 
     class Meta:

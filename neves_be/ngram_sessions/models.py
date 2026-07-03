@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.utils import timezone
 
-from neves_be.common.models import UUIDPkModelMixin
+from neves_be.common.models import UUIDPkModel
 from neves_be.practice_sessions.models import PracticeSession
 from neves_be.practice_sessions.models import PracticeSessionItem
 from neves_be.practice_sessions.models import PracticeSessionItemMeta
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from neves_be.word_lm.types import NgramId
 
 
-class NgramSessionRequest(UUIDPkModelMixin, models.Model):
+class NgramSessionRequest(UUIDPkModel):
     started_at = models.DateTimeField(default=timezone.now())
     finished_at = models.DateTimeField(default=None, null=True)
     user: models.ForeignKey[User, User] = models.ForeignKey(
@@ -29,6 +29,8 @@ class NgramSessionRequest(UUIDPkModelMixin, models.Model):
         on_delete=models.CASCADE,
     )
     request_session: NgramSession | None
+
+    class Meta: ...
 
     def __str__(self):
         return f"n-gram session request {self.pk} for user {self.user.username}"

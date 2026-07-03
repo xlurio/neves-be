@@ -26,6 +26,8 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_6
   apt-get update && \
   apt-get -y install cuda-toolkit-13-3
 
+COPY ./tts_model /app/tts_model
+
 # Requirements are installed here to ensure they will be cached.
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=bind,source=pyproject.toml,target=pyproject.toml \

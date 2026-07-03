@@ -106,7 +106,7 @@ def generate_translation(txt: str) -> str:
 
         if _is_valid_translation(output):
             translation_model, _ = GeneratedTranslation.objects.get_or_create(
-                id=hash(txt),
+                id=generation_cache_id(txt),
                 output=output,
             )
             return translation_model.output

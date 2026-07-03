@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
-from neves_be.common.models import UUIDPkModelMixin
+from neves_be.common.models import UUIDPkModel
 from neves_be.ngram_sessions.models import NgramSession
 from neves_be.radical_sessions.models import RadicalSession
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from neves_be.practice_sessions.models import PracticeSession
 
 
-class PracticeSessionAssessment(UUIDPkModelMixin, models.Model):
+class PracticeSessionAssessment(UUIDPkModel):
     finished_at = models.DateTimeField(null=True, blank=True)
     score = models.PositiveIntegerField(default=0)
     session: PracticeSession
