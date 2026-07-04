@@ -101,7 +101,9 @@ class Char2RadicalQuestionFactory(BasePracticeQuestionFactory):
         self,
         logograms: Sequence[Logogram],
     ) -> dict[LogogramId, list[Radical]]:
-        lgg_rdcs_pairs = RadicalLogogramMap.objects.filter(logogram__in=logograms)
+        lgg_rdcs_pairs = RadicalLogogramMap.objects.filter(
+            logogram__in=logograms,
+        ).select_related("logogram", "radical")
         result: dict[LogogramId, list[Radical]] = defaultdict(list)
 
         for lgg_rdcs_pair in lgg_rdcs_pairs:

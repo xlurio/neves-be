@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 from collections import defaultdict
 from typing import TYPE_CHECKING
@@ -45,6 +46,9 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
         self,
         session: ConcretePracticeSession,
     ) -> ConcretePracticeSessionAssessment:
+        _logger = logging.getLogger(self.make_assessment.__name__)
+        _logger.info("Creating n-gram assessment")
+
         _session = cast("NgramSession", session)
         assessment_ngrams = self.__get_valid_ngrams(_session)
 
@@ -105,11 +109,11 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
     ) -> dict[NgramId, list[Word]]:
         ngr_wrd_pairs = set(
             WordNgramMap.objects.filter(
-                ngram_id=self.__get_learned_ngrams_qs(user).values_list(
+                ngram_id__in=self.__get_learned_ngrams_qs(user).values_list(
                     "pk",
                     flat=True,
                 ),
-            ),
+            ).select_related("word", "ngram"),
         )
         result: dict[NgramId, list[Word]] = defaultdict(list)
 
@@ -124,7 +128,7 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
         user_sessions = NgramSession.objects.filter(user=user)
 
         lrnd_wrds = Word.objects.filter(
-            word_ngrams__ngram__ngram_sessions__in=user_sessions,
+            word_ngrams__ngram__ngram_sessions__session__in=user_sessions,
         )
 
         return Ngram.objects.filter(ngram_words__word__in=lrnd_wrds)
@@ -134,12 +138,17 @@ class NgramAssessmentFactory(BaseAssessmentFactory):
         assessment: NgramSessionAssessment,
         ngrams: Sequence[Ngram],
     ) -> Sequence[NgramSessionAssessmentQuestion]:
+        _logger = logging.getLogger(self.make_assessment.__name__)
+        _logger.info("Creating n-gram assessment questions")
+
         questions = set()
         alternatives_to_create: list[NgramSessionAssessmentQuestionAlt] = []
         number = 1
         question_type = random.choice(list(NgramSessionQuestionType))
 
-        for ngram in ngrams:
+        for question_idx, ngram in enumerate(ngrams):
+            _logger.info("Creating n-gram assessment question %d", question_idx)
+
             if question_type == NgramSessionQuestionType.LOGOGRAM_TO_RADICALS:
                 rst = Char2RadicalQuestionFactory().make_question(
                     assessment,
