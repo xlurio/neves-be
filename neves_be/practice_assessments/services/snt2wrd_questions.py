@@ -87,7 +87,7 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
             "NGRAM-AUDIO-TO-WORD-TEXT",
         }:
             question_txt = "What word is missing in the following audio?"
-            audio = generate_speech(question_txt)
+            audio = generate_speech(processed_ngram.replace(MASK_TOKEN, "…"))
         elif question_type in {
             "NGRAM-TEXT-TO-WORD-AUDIO",
             "NGRAM-TEXT-TO-WORD-TEXT",
@@ -106,8 +106,10 @@ class Ngram2WordQuestionFactory(BasePracticeQuestionFactory):
         )
 
     def __select_words(self, word: Word) -> Sequence[Word]:
-        words = set(Word.objects.exclude(pk=word.pk))
-        options = [*random.sample(cast("Sequence[Word]", words), k=4), word]
+        options = [
+            *random.sample(list(Word.objects.exclude(pk=word.pk).distinct()), k=4),
+            word,
+        ]
         options.sort(key=lambda _: random.random())
 
         return cast("Sequence[Word]", options)

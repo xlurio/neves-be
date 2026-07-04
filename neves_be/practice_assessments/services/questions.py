@@ -6,7 +6,6 @@ from neves_be.practice_assessments.models import PracticeSessionAssessment
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestion
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAlt
 from neves_be.practice_questions.models import PracticeSessionAssessmentQuestionAnswer
-from neves_be.practice_questions.models import RadicalSessionAssessmentQuestion
 
 
 class PracticeQuestionSetup(TypedDict):
@@ -47,8 +46,8 @@ class BasePracticeQuestionFactory:
         alternatives: Sequence[PracticeSessionAssessmentQuestionAlt],
     ) -> PracticeQuestionSetup:
         alternatives_to_create: list[PracticeSessionAssessmentQuestionAlt] = []
-        assert isinstance(question, RadicalSessionAssessmentQuestion), (
-            f"{question} shoud be an instance of {RadicalSessionAssessmentQuestion}"
+        assert isinstance(question, PracticeSessionAssessmentQuestion), (
+            f"{question:r} should be an instance of {PracticeSessionAssessmentQuestion}"
         )
 
         for alt in alternatives:
