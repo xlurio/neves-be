@@ -62,6 +62,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # APPS
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -318,3 +319,7 @@ CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {
         "x-expires": 86400000,
     },  # Deletes old result queues after 24 hours
 }
+
+# ADMIN
+# ------------------------------------------------------------------------------
+ADMIN_URL = "admin/"

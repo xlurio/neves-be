@@ -4,6 +4,9 @@ dockercomposeup=$(dockercompose) up -d
 build:
 	$(dockercompose) build
 
+createsuperuser:
+	$(dockercompose) run --rm django sh -c 'python manage.py createsuperuser'
+
 down:
 	$(dockercompose) down -v
 
