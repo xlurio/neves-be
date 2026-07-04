@@ -12,6 +12,7 @@ from django.db import transaction
 
 from neves_be.common.exceptions import AsyncOperationError
 from neves_be.genai.services.text2speech import generate_speech
+from neves_be.genai.services.translation import generate_translation
 from neves_be.ngram_sessions.models import NgramSession
 from neves_be.ngram_sessions.models import NgramSessionNgram
 from neves_be.ngram_sessions.models import NgramSessionRequest
@@ -120,8 +121,13 @@ class NgramSessionFactory(BaseSessionFactory):
                     ),
                 )
                 executor.submit(generate_speech, curr_ngram.value)
+                executor.submit(generate_translation, curr_ngram.value)
                 executor.map(
                     generate_speech,
+                    [word.value for word in ngrams_to_words[curr_ngram.id]],
+                )
+                executor.map(
+                    generate_translation,
                     [word.value for word in ngrams_to_words[curr_ngram.id]],
                 )
                 executor.map(
@@ -235,6 +241,7 @@ class NgramSessionFactory(BaseSessionFactory):
             )
             .exclude(ngram_sessions__session__in=self.__get_user_sessions())
             .order_by("-occurrences", "-n_words")
+            .distinct()
         )
 
         return self.__cache[self.get_session_ngrams_qs.__name__]
