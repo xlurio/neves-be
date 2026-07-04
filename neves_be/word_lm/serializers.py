@@ -8,6 +8,7 @@ from neves_be.common.serializers import CamelCaseAliasSerializerMixin
 from neves_be.genai.services.text2speech import generate_speech
 from neves_be.genai.services.translation import generate_translation
 from neves_be.lang_model.serializers import PronounceOrGenerateMixin
+from neves_be.lang_model.serializers import PronounceOrGenerateMixinCtx
 from neves_be.word_lm.models import Ngram
 from neves_be.word_lm.models import Sentence
 from neves_be.word_lm.models import Word
@@ -19,6 +20,8 @@ if TYPE_CHECKING:
 
 
 class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
+    context: PronounceOrGenerateMixinCtx
+
     meaning = serializers.SerializerMethodField()
     pronounce = serializers.SerializerMethodField()
 
@@ -34,7 +37,9 @@ class SentenceSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSeriali
         return generate_translation(instance.value)
 
     def get_pronounce(self, instance: Sentence) -> str:
-        return generate_speech(instance.value)
+        return self.context["request"].build_absolute_uri(
+            generate_speech(instance.value),
+        )
 
 
 class NgramSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer):
@@ -56,15 +61,24 @@ class NgramSerializer(CamelCaseAliasSerializerMixin, serializers.ModelSerializer
     def get_meaning(self, instance: Ngram) -> str:
         return generate_translation(instance.value)
 
-    def get_pronounce(self, instance: Ngram) -> str:
-        return generate_speech(instance.value)
+    def get_pronounce(self, instance: Sentence) -> str:
+        return self.context["request"].build_absolute_uri(
+            generate_speech(instance.value),
+        )
 
 
 class WordSerializer(
     CamelCaseAliasSerializerMixin,
-    PronounceOrGenerateMixin,
     serializers.ModelSerializer,
+    PronounceOrGenerateMixin,
 ):
+    pronounce = serializers.SerializerMethodField()
+
     class Meta:
         model = Word
         fields = ["id", "value", "pronounce"]
+
+    def _get_input_text(self, instance):
+        assert isinstance(instance, Word)
+
+        return instance.value

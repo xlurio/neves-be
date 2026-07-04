@@ -1,10 +1,17 @@
+from __future__ import annotations
+
+import abc
+from typing import TYPE_CHECKING
+from typing import Any
 from typing import TypedDict
 
-from django.http import HttpRequest
-from rest_framework import serializers
-
-from neves_be.char_lm.models import Logogram
 from neves_be.genai.services.text2speech import generate_speech
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
+    class WithPronounceCls:
+        pronounce: str
 
 
 class PronounceOrGenerateMixinCtx(TypedDict):
@@ -14,11 +21,11 @@ class PronounceOrGenerateMixinCtx(TypedDict):
 class PronounceOrGenerateMixin:
     context: PronounceOrGenerateMixinCtx
 
-    pronounce = serializers.SerializerMethodField()
-
-    def get_pronounce(self, instance: Logogram) -> str:
+    def get_pronounce(self, instance: WithPronounceCls) -> str:
         if not instance.pronounce:
-            return generate_speech(instance.id)
+            return self.context["request"].build_absolute_uri(
+                generate_speech(self._get_input_text(instance)),
+            )
 
         if instance.pronounce.startswith(("http://", "https://")):
             return instance.pronounce
@@ -26,4 +33,9 @@ class PronounceOrGenerateMixin:
         if instance.pronounce.startswith("/"):
             return self.context["request"].build_absolute_uri(instance.pronounce)
 
-        return instance.pronounce
+        msg = f"Invalid word pronounce audio path: {instance.pronounce}"
+        raise ValueError(msg)
+
+    @abc.abstractmethod
+    def _get_input_text(self, instance: Any) -> str:
+        raise NotImplementedError

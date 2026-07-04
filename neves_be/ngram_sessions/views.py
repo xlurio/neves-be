@@ -67,7 +67,7 @@ def ngram_session_ngrams_view(
             "count": total_ngrams,
             "next": next_url,
             "previous": previous_url,
-            "payload": NgramSerializer(ngram).data,
+            "payload": NgramSerializer(ngram, context={"request": request}).data,
         },
     )
 
@@ -119,7 +119,7 @@ def ngram_session_ngram_words_view(
             "count": total_words,
             "next": next_url,
             "previous": previous_url,
-            "payload": WordSerializer(word).data,
+            "payload": WordSerializer(word, context={"request": request}).data,
         },
     )
 
@@ -180,6 +180,6 @@ def ngram_session_word_logogram_view(
             "count": total_logograms,
             "next": next_url,
             "previous": previous_url,
-            "payload": LogogramSerializer(logogram).data,
+            "payload": LogogramSerializer(logogram, context={"request": request}).data,
         },
     )

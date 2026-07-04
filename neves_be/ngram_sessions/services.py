@@ -39,7 +39,7 @@ def owned_ngram_session_ngram_word_or_404(
         msg = "Word not found for this ngram session."
         raise Http404(msg)
 
-    return ngram.ngram_words.order_by("word__occurrences")[word_num].word
+    return ngram.ngram_words.order_by("word__occurrences")[word_num - 1].word
 
 
 def owned_ngram_session_word_logogram_or_404(
@@ -51,4 +51,6 @@ def owned_ngram_session_word_logogram_or_404(
         msg = "Word not found for this ngram session."
         raise Http404(msg)
 
-    return word.word_logograms.order_by("logogram__occurrences")[logogram_num].logogram
+    return word.word_logograms.order_by("logogram__occurrences")[
+        logogram_num - 1
+    ].logogram
