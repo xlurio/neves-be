@@ -18,7 +18,6 @@ from neves_be.word_lm.models import WordSentenceMap
 
 if TYPE_CHECKING:
     import sqlite3
-    from collections.abc import Sequence
 
 
 def import_logograms(cursor: sqlite3.Cursor, batch_size: int) -> None:
@@ -53,10 +52,6 @@ def import_logograms(cursor: sqlite3.Cursor, batch_size: int) -> None:
     Logogram.objects.bulk_create(logogram_models, batch_size=batch_size)
 
 
-def _get_missing_radical_logogram_maps() -> Sequence[RadicalLogogramMap]:
-    return [RadicalLogogramMap(logogram_id="种", radical_id="中")]
-
-
 def import_radical_logogram_maps(cursor: sqlite3.Cursor, batch_size: int) -> None:
     map_rows = cursor.execute(
         "SELECT LOGOGRAM_ID, RADICAL_ID FROM MCC2LM_RADICAL_LOGOGRAM_MAP",
@@ -68,8 +63,7 @@ def import_radical_logogram_maps(cursor: sqlite3.Cursor, batch_size: int) -> Non
                 radical_id=str(row_value(row, "RADICAL_ID")),
             )
             for row in map_rows
-        ]
-        + _get_missing_radical_logogram_maps(),
+        ],
         batch_size=batch_size,
         ignore_conflicts=True,
     )

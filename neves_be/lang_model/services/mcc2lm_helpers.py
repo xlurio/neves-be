@@ -22,7 +22,6 @@ from neves_be.word_lm.models import WordSentenceMap
 
 if TYPE_CHECKING:
     import sqlite3
-    from collections.abc import Sequence
 
 
 @overload
@@ -58,17 +57,6 @@ def reset_radical_learning_tables() -> None:
     Radical.objects.all().delete()
 
 
-def _missing_radicals() -> Sequence[Radical]:
-    return [
-        Radical(
-            id="中",
-            pinyin="zhōng",
-            meaning="Middle; centre",
-            pronounce="/audio-cmn/18k-abr/syllabs/cmn-zhong1.mp3",
-        ),
-    ]
-
-
 def import_radicals(
     cursor: sqlite3.Cursor,
     batch_size: int,
@@ -95,6 +83,6 @@ def import_radicals(
             raise
 
     Radical.objects.bulk_create(
-        radical_models + _missing_radicals(),
+        radical_models,
         batch_size=batch_size,
     )
