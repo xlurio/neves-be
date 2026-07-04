@@ -73,10 +73,14 @@ class WordSerializer(
     PronounceOrGenerateMixin,
 ):
     pronounce = serializers.SerializerMethodField()
+    meaning = serializers.SerializerMethodField()
 
     class Meta:
         model = Word
-        fields = ["id", "value", "pronounce"]
+        fields = ["id", "value", "pronounce", "meaning"]
+
+    def get_meaning(self, instance: Ngram) -> str:
+        return generate_translation(instance.value)
 
     def _get_input_text(self, instance):
         assert isinstance(instance, Word)
