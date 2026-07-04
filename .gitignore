@@ -279,3 +279,4 @@ neves_be/media/
 *.db*
 translation_model/*
 tts_model/*
+tts_model
